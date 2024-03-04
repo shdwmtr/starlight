@@ -132,7 +132,7 @@ function install_panel() {
                         Released: {calculateTimeAgo(details[0]?.published_at)} |&nbsp;
                         {
                             details?.reduce((totalDownloads: any, release: any) => {
-                                return totalDownloads + release.assets.reduce((assetCount: any, asset: any) => {
+                                return totalDownloads + release?.assets?.reduce((assetCount: any, asset: any) => {
                                     return assetCount + (asset.download_count || 0);
                                 }, 0)
                             }, 0)
@@ -167,7 +167,7 @@ function install_panel() {
                             <li>
                             Total download size: (
                             {
-                                formatBytes(details[0]?.assets.reduce((totalSize: number, asset: any) => {
+                                formatBytes(details[0]?.assets?.reduce((totalSize: number, asset: any) => {
                                     return totalSize + asset.size;
                                 }, 0))
                             })
