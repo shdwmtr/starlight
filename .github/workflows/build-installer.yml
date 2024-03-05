@@ -47,7 +47,7 @@ jobs:
           body: |
             Patch Notes:
 
-            built from source [here]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID") using actions
+            built from source [here](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) using actions
 
       - name: Upload Installer Executable
         uses: actions/upload-release-asset@v1
