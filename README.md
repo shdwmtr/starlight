@@ -1,6 +1,6 @@
 <img src="https://i.imgur.com/9qYPFSA.png" alt="Alt text" width="40">
 
-## SCH Millennium Installer
+## [SCH] Millennium Installer
 
 A simple standalone program which automates the installation, removal and maintenance of Millennium.
 
