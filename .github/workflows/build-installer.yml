@@ -45,8 +45,9 @@ jobs:
           draft: true
           prerelease: false # Change to true if it's a pre-release
           body: |
-            This is a draft release for the Millennium Installer.
-            Please review and provide feedback.
+            Patch Notes:
+
+            built from source [here]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID") using actions
 
       - name: Upload Installer Executable
         uses: actions/upload-release-asset@v1
