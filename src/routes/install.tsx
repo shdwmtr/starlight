@@ -155,10 +155,10 @@ function install_panel() {
                         <br />
                         Evaluated files for install
                         <ul>
-                            {details[0]?.assets.map((asset: any) => {
+                            {details[0]?.assets?.map((asset: any) => {
                                 return (
                                     <li>
-                                        {asset.name} ({formatBytes(asset.size)})
+                                        {asset?.name} ({formatBytes(asset.size)})
                                     </li>
                                 )
                             })}

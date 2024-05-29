@@ -5,7 +5,6 @@
   "version": "1.0.8",
   "scripts": {
     "dev": "vite",
-    "compile": "electron-webpack",
     "build": "tsc && vite build && electron-builder -p never",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
