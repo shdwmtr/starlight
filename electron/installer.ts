@@ -45,7 +45,7 @@ const installer = {
 	
 					log(`Evaluating Steam Path...`) 
 					steam.get_path().then(async (steamPath: any) => { 
-						log(`Downloading File Queury...`)
+						log(`Downloading File Query...`)
 						await delay(1000)
 	
 						fs.writeFile(`${steamPath}\\.cef-enable-remote-debugging`, '', (err: any) => {
