@@ -23,18 +23,26 @@ function UninstallerSelectComponents() {
 	const [themesSize, setThemesSize] = useState<any>();
 	const [pluginsSize, setPluginSize] = useState<any>();
 
+	const GetTreeSize = (relativePath: string) => {
+		return new Promise((resolve) => {
+			invoke('calc_dir_size', { path: relativePath, fromSteamDir: true })
+				.then((size: any) => resolve(size))
+				.catch((_: any) => resolve(0))
+		})
+	}
+
 	useEffect(() => {
 		invoke('get_steam_path').then((path: any) => setSteamPath(path));
 
 		Promise.all([
-			invoke('calc_dir_size', { path: "user32.dll", fromSteamDir: true }), 
-			invoke('calc_dir_size', { path: "python311.dll", fromSteamDir: true }),
-			invoke('calc_dir_size', { path: "ext", fromSteamDir: true }),
-			invoke('calc_dir_size', { path: "steamui/skins", fromSteamDir: true }),
+			GetTreeSize("user32.dll"), 
+			GetTreeSize("python311.dll"),
+			GetTreeSize("ext"),
+			GetTreeSize("steamui/skins"),
 
-			invoke('calc_dir_size', { path: "ext/data/cache", fromSteamDir: true }),
-			invoke('calc_dir_size', { path: "ext/data/assets", fromSteamDir: true }),
-			invoke('calc_dir_size', { path: "plugins", fromSteamDir: true })
+			GetTreeSize("ext/data/cache"),
+			GetTreeSize("ext/data/assets"),
+			GetTreeSize("plugins")
 		])
 		.then(([user32, python311, extSize, skinsSize, pythonBin, coreSize, pluginsSize]: any) => { 
 			setMillenniumSize(user32 + python311)
