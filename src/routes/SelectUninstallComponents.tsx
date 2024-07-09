@@ -143,12 +143,10 @@ function UninstallerSelectComponents() {
 
                         <div className='hor-seperator'></div>
 
-                        <b>Uninstalling from: </b> {steamPath}
-						<br/>
-                        <b>Freeing: </b>
-
-						{FormatBytes(uninstallSize?.reduce((total: any, type) => total + uninstallTypes.get(type), 0))}
-
+                        <div><b>Uninstalling from: </b> {steamPath}</div>
+                        <div style={{marginTop: "4px"}}><b>Reclaimed Disk Space: </b> 
+							{FormatBytes(uninstallSize?.reduce((total: any, type) => total + uninstallTypes.get(type), 0))}
+						</div>
 
                     </motion.div>
                 </div>

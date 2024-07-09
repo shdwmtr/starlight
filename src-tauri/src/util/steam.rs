@@ -7,6 +7,7 @@ use std::fs;
 use std::path::Path;
 
 #[command]
+// todo linux support
 pub fn get_steam_path() -> Result<String, String> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
@@ -22,10 +23,8 @@ pub fn get_steam_path() -> Result<String, String> {
         format!("Failed to canonicalize path: {}", e)
     })?;
 
-    // Convert the path to a string
     let resolved_path_str = resolved_path.to_string_lossy().to_string();
 
-    // Remove the `\\?\` prefix if it exists
     let cleaned_path = if resolved_path_str.starts_with(r"\\?\") {
         resolved_path_str[4..].to_string()
     } else {
@@ -35,6 +34,7 @@ pub fn get_steam_path() -> Result<String, String> {
     Ok(cleaned_path)
 }
 
+// todo linux support
 fn close_steam_process() -> Result<(), Box<dyn std::error::Error>> {
     let mut system = System::new_all();
     system.refresh_all();
@@ -43,7 +43,6 @@ fn close_steam_process() -> Result<(), Box<dyn std::error::Error>> {
         if process.name() == "steam.exe" {
             println!("Found steam.exe with PID: {}", pid);
 
-            // Use the signal method to kill the process
             if process.kill() {
                 println!("Successfully killed steam.exe");
                 return Ok(());
