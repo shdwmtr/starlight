@@ -104,6 +104,13 @@ function UninstallerSelectComponents() {
 
 						<div className='select-uninstall-components'>
 
+							<div className='check' id='millenniumComp'>
+								<CustomCheckbox isChecked={true} onChange={_ => HandleComponentChange(eUninstallType.MILLENNIUM)}>
+									<p>Millennium: {FormatBytes(millenniumSize)}</p>
+								</CustomCheckbox>
+							</div>
+							<Tooltip anchorSelect="#millenniumComp" place="right-end">{steamPath}\user32.dll,<br/>{steamPath}\python311.dll</Tooltip>
+
 							<div className='check' id='coreComponents'>
 								<CustomCheckbox isChecked={true} onChange={_ => HandleComponentChange(eUninstallType.CORE)}>
 									<p>Core Components: {FormatBytes(coreSize)}</p>
@@ -117,13 +124,6 @@ function UninstallerSelectComponents() {
 								</CustomCheckbox>
 							</div>
 							<Tooltip anchorSelect="#pythonComp" place="right-end">{steamPath}\ext\data\cache</Tooltip>
-
-							<div className='check' id='millenniumComp'>
-								<CustomCheckbox isChecked={true} onChange={_ => HandleComponentChange(eUninstallType.MILLENNIUM)}>
-									<p>Millennium: {FormatBytes(millenniumSize)}</p>
-								</CustomCheckbox>
-							</div>
-							<Tooltip anchorSelect="#millenniumComp" place="right-end">{steamPath}\user32.dll,<br/>{steamPath}\python311.dll</Tooltip>
 
 							<div className='check' id='themesComp'>
 								<CustomCheckbox isChecked={true} onChange={_ => HandleComponentChange(eUninstallType.THEMES)}>
