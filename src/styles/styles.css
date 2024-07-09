@@ -458,3 +458,135 @@ svg.social-icon-inner {
   justify-content: center;
   align-items: center;
 }
+
+.hor-seperator {
+  border-bottom: 1px solid #333;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+input.steampath-textentry {
+  background: #191a1c;
+  color: white;
+  border-radius: 4px;
+  border: 1px solid #2E2F31;
+  padding: 7px;
+  font: inherit;
+  transition: all ease 0.3s;
+  width: 100%;
+}
+
+input.steampath-textentry:hover {
+  background: #1f2022;
+  border: 1px solid #3a3a3a !important;
+}
+
+input.steampath-textentry:focus-visible {
+  outline: unset !important;
+}
+
+.steampath-entry {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  gap: 8px;
+}
+button.steampath-browse {
+  height: 31px;
+  background: #191a1c;
+  border: 1px solid #2E2F31;
+  border-radius: 4px;
+  width: 31px;
+  color: white;
+}
+
+button.steampath-browse:hover {
+  background: #1f2022;
+  border: 1px solid #3a3a3a;
+  cursor: pointer;
+}
+
+.custom-checkbox {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.custom-checkbox input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkmark {
+  position: absolute;
+  top: 13px;
+  left: 0;
+  height: 15px;
+  width: 15px;
+  background-color: #111214;
+  border: 1px solid #4b4b4b;
+  border-radius: 4px;
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+  background-color: #212325;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.custom-checkbox input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.custom-checkbox .checkmark:after {
+  left: 5px;
+  top: 2px;
+  width: 3px;
+  height: 7px;
+  border: solid rgb(121, 121, 121);
+  border-width: 0 1px 1px 0;
+  transform: rotate(45deg);
+}
+
+.select-uninstall-components {
+  display: grid;
+}
+
+input[type="checkbox"] {
+  width: 10px;
+  height: 10px;
+  /* background: black !important; */
+  color: black;
+}
+
+.check {
+  display: flex;
+  gap: 11px;
+  height: 31px;
+  align-items: center;
+}
+
+label.custom-checkbox p {
+  font-size: 12px;
+  margin-left: 25px;
+}
+
+.select-uninstall-components {
+  margin-top: 25px;
+}
+
+.select-uninstall-components {
+  width: max-content;
+}
+
+.check {
+  width: fit-content;
+  padding-right: 10px;
+}
