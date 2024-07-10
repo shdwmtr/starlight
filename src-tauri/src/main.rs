@@ -112,8 +112,7 @@ fn is_auto_installer() -> bool {
 }
 
 fn main() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
+    tauri::Builder::default().invoke_handler(tauri::generate_handler![
             // backend functions
             download_file_to_path, 
             get_steam_path, 
@@ -121,38 +120,35 @@ fn main() {
             delete_recursive,
             close_steam_process,
             is_auto_installer
-        ])
-        .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            let mut width = 665.0;
-            let mut height = 460.0;
+        ]).setup(|app| {
+        let window = app.get_window("main").unwrap();
+        let mut width = 665.0;
+        let mut height = 460.0;
 
-            if is_auto_installer() {
-                width = 425.0;
-                height = 175.0;
+        if is_auto_installer() {
+            width = 425.0;
+            height = 175.0;
 
-                match close_steam_process() {
-                    Ok(_) => println!("Closed steam.exe"),
-                    Err(e) => println!("Failed to close steam.exe: {}", e),
-                }
+            match close_steam_process() {
+                Ok(_) => println!("Closed steam.exe"),
+                Err(e) => println!("Failed to close steam.exe: {}", e),
             }
+        }
 
-            #[cfg(target_os = "windows")]
+        #[cfg(target_os = "windows")]
+        {
+            #[cfg(debug_assertions)]
             {
-                #[cfg(debug_assertions)]
-                {
-                    window.open_devtools();
-                    window.close_devtools();
-                }
-                use window_shadows::set_shadow;
-                set_shadow(&window, true).unwrap();
+                window.open_devtools();
+                window.close_devtools();
             }
+            use window_shadows::set_shadow;
+            set_shadow(&window, true).unwrap();
+        }
 
-            window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height })).unwrap();
-            center_window(window.clone());
+        window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height })).unwrap();
+        center_window(window.clone());
 
-            Ok(())
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        Ok(())
+    }).run(tauri::generate_context!()).expect("error while running tauri application");
 }

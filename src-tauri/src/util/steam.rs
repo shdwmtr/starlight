@@ -38,11 +38,7 @@ pub fn get_steam_path() -> Result<String, String> {
     use std::process::Command;
     use tauri::api::path::home_dir;
 
-    let output = Command::new("readlink")
-        .arg("-f")
-        .arg(home_dir().expect("Failed to get home dir").join(".steam/steam"))
-        .output()
-        .expect("Failed to get steam path.");
+    let output = Command::new("readlink").arg("-f").arg(home_dir().expect("Failed to get home dir").join(".steam/steam")).output().expect("Failed to get steam path.");
     let clean_path = std::str::from_utf8(&output.stdout).unwrap().replace("\n", "").parse().unwrap();
     if output.status.success() {
         Ok(clean_path)
