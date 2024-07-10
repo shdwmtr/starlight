@@ -7,14 +7,26 @@ A simple standalone program which automates the installation, removal and mainte
 
 </div>
 
-## Prerequisites
+## Installing
+
+  The installer current only supports Windows. See [this page](https://github.com/SteamClientHomebrew/Millennium/wiki/Getting-Started#automatic) for a more detailed guide.
+
+  [![Static Badge](https://img.shields.io/badge/Download%20Windows-fff?style=for-the-badge&logo=windows&logoColor=white&color=2D5CBF)][windows-link]
+
+  [windows-link]: https://github.com/SteamClientHomebrew/Installer/releases/latest/download/Millennium.Installer-Windows.exe
+  [windows-badge]: https://img.shields.io/badge/Windows%20(10+)-3a71c1?logo=Windows&logoColor=white&labelColor=111111&color=3a71c1&style=for-the-badge
+
+
+&nbsp;
+
+## Building
+
+### Prerequisites
 - [git](https://git-scm.com) 
 - [pnpm](https://pnpm.io/)
 - [rust](https://www.rust-lang.org/) 
 - Command line of your choice.
-
-## Building
-
+&nbsp;
 ```ps1
 $ git clone https://github.com/SteamClientHomebrew/Installer.git && cd Installer
 $ pnpm install
