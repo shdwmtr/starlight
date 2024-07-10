@@ -57,7 +57,7 @@
       "csp": null
     },
     "bundle": {
-      "active": true,
+      "active": false,
       "targets": "all",
       "identifier": "com.millennium.steam",
       "publisher": "Steam Client Homebrew.",

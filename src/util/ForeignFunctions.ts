@@ -64,8 +64,7 @@ const Core = {
                 break;
             }
             case eInstallType.UNINSTALL: {
-                const uninstaller = new IUninstaller(steamPath);
-                uninstaller.StartUninstaller();
+                // no-oped for now
                 break
             }
         }
