@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from "framer-motion"
 import { TitleBar } from '../components/TitleBar';
-import { Core, InstallerMessageProps, eInstallMessageType } from '../components/ForeignFunctions';
+import { Core, InstallerMessageProps, eInstallMessageType } from '../util/ForeignFunctions';
 import { FooterLegend } from '../components/Footer';
 
 interface InstallerFinishedProps {

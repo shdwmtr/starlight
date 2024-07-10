@@ -1,6 +1,6 @@
 import { writeTextFile, createDir } from '@tauri-apps/api/fs';
 import { invoke, path } from '@tauri-apps/api';
-import { Core, eInstallMessageType, eInstallType, OnInstallerMessage } from '../components/ForeignFunctions';
+import { Core, eInstallMessageType, eInstallType, OnInstallerMessage } from '../util/ForeignFunctions';
 import { GitHub } from './GitHub';
 
 export class IInstaller {

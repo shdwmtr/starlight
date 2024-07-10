@@ -6,8 +6,8 @@ import { TitleBar } from '../components/TitleBar';
 import TimestampConverter from '../components/TimeStamp';
 import { invoke } from '@tauri-apps/api';
 import { open } from '@tauri-apps/api/dialog';
-import { Core, eInstallType } from '../components/ForeignFunctions';
-import { FormatBytes } from '../components/Bytes';
+import { Core, eInstallType } from '../util/ForeignFunctions';
+import { FormatBytes } from '../util/Bytes';
 import { GitHub } from '../logic/GitHub';
 
 const RenderEvaluatedFiles = ({ assets }: { assets: any }) => { 

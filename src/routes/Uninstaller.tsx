@@ -3,11 +3,11 @@ import {motion} from "framer-motion"
 import {TitleBar} from '../components/TitleBar';
 import {FooterLegend} from '../components/Footer';
 import {invoke, path} from '@tauri-apps/api';
-import {FormatBytes} from '../components/Bytes';
+import {FormatBytes} from '../util/Bytes';
 import CustomCheckbox from '../components/CheckBox';
 import {Tooltip} from 'react-tooltip';
 import {GitHub} from '../logic/GitHub';
-import {Core} from '../components/ForeignFunctions';
+import {Core} from '../util/ForeignFunctions';
 
 enum eUninstallType {
 	MILLENNIUM,

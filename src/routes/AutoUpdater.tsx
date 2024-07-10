@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from "framer-motion"
 import { TitleBar } from '../components/TitleBar';
-import { Core, InstallerMessageProps, eInstallMessageType, eInstallType } from '../components/ForeignFunctions';
+import { Core, InstallerMessageProps, eInstallMessageType, eInstallType } from '../util/ForeignFunctions';
 import { FooterLegend } from '../components/Footer';
 import { invoke } from '@tauri-apps/api';
 

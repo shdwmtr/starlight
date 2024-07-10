@@ -1,5 +1,5 @@
 import packageJson from '../../package.json';
-import { Core } from './ForeignFunctions';
+import { Core } from '../util/ForeignFunctions';
 
 export interface TitleBarProps {
     bCanGoBack: boolean;
