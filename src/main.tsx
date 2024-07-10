@@ -1,8 +1,8 @@
 import ReactDOM from "react-dom/client";
 import SelectPanel from "./routes/Controller";
-import Installer from "./routes/installer";
+import Installer from "./routes/Installer.tsx";
 import InstallPanel from "./routes/InstallPanel";
-import Uninstaller from "./routes/uninstaller";
+import Uninstaller from "./routes/Uninstaller.tsx";
 import UninstallPanel from "./routes/UninstallPanel";
 import AutoInstaller from "./routes/AutoUpdater";
 
