@@ -4,13 +4,11 @@ import { motion } from "framer-motion"
 import { TitleBar } from '../components/TitleBar';
 import { FooterLegend } from '../components/Footer';
 
-/** No, your not a hacker for finding a webhook in a public repository */
-const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1259950288362668134/HEVpgUM4HWqd5EOSMm8HRDq4DDduDWXSRor4WJRNrnTzFMRPQx4UkIH4oKr0TGlTmmAu";
-
 const SubmitUninstallInformation = async (tags: any) => { 
 	return new Promise(async (resolve, reject) => {
 		try {
-			const webhookResponse = await fetch(WEBHOOK_URL, {
+			const webHookUrl = import.meta.env.VITE_UNINSTALL_LOGS_WEBHOOK_URL!;
+			const webhookResponse = await fetch(webHookUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -35,17 +33,10 @@ function UninstallerViewModal() {
 	const ToggleTagState = (event: any, tag: string) => {
 
 		const hasToggled = event.target.classList.toggle('selected')
-
-		if (hasToggled) {
-			setTags([...tagCollection, tag])
-		}
-		else {
-			setTags(tagCollection.filter((item: any) => item != tag))
-		}
+		setTags(hasToggled ? [...tagCollection, tag] : tagCollection.filter((item: any) => item != tag))
 	}
 
 	const StartUninstall = async () => { 
-
 		if (!tagCollection.length) {
 			return;
 		}

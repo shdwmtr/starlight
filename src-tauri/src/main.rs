@@ -13,8 +13,6 @@ use util::fs::delete_recursive;
 use util::steam::close_steam_process;
 use util::steam::get_steam_path;
 
-use crate::util::steam::__cmd__close_steam_process;
-
 mod util {
     pub mod steam;
     pub mod fs;
