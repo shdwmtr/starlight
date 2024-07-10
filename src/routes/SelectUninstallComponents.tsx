@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
-import { readTextFile, removeFile, removeDir } from '@tauri-apps/api/fs';
-import { motion } from "framer-motion"
-import { TitleBar } from '../components/TitleBar';
-import { FooterLegend } from '../components/Footer';
-import { invoke, path } from '@tauri-apps/api';
-import { FormatBytes } from '../components/Bytes';
+import {useEffect, useState} from 'react';
+import {motion} from "framer-motion"
+import {TitleBar} from '../components/TitleBar';
+import {FooterLegend} from '../components/Footer';
+import {invoke, path} from '@tauri-apps/api';
+import {FormatBytes} from '../components/Bytes';
 import CustomCheckbox from '../components/CheckBox';
-import { Tooltip } from 'react-tooltip';
-import { set } from 'date-fns';
-import { GitHub } from '../logic/GitHub';
-import { Core } from '../components/ForeignFunctions';
+import {Tooltip} from 'react-tooltip';
+import {GitHub} from '../logic/GitHub';
+import {Core} from '../components/ForeignFunctions';
 
 enum eUninstallType {
 	MILLENNIUM,
@@ -65,14 +63,10 @@ function UninstallerSelectComponents() {
 		for (const component of bufferUninstallList) {
 			await new Promise(resolve => setTimeout(resolve, 2500)); // add a delay for ux
 	
-			// const result = await invoke('delete_recursive', { path: await path.resolve(steamPath, component.path)})
-			// 	.then((_: any) => ({ success: true }))
-			// 	.catch((error: any) => ({ success: false, message: error}));
+			const result = await invoke('delete_recursive', { path: await path.resolve(steamPath, component.path)})
+				.then((_: any) => ({ success: true }))
+				.catch((error: any) => ({ success: false, message: error}));
 
-			const result = {
-				success: true
-			}
-	
 			console.log('Uninstall result:', await path.resolve(steamPath, component.path), result);
 	
 			bufferUninstallList = bufferUninstallList.map((target) => {
