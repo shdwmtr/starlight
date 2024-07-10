@@ -19,18 +19,15 @@ mod util {
 }
 
 async fn download_file(url: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    // Create a reqwest Client
+
     let client = Client::new();
 
-    // Send a GET request to download the file
     let response = client.get(url).send().await?;
     let content = response.bytes().await?;
 
-    // Ensure the parent directory exists
     let parent_dir = Path::new(path).parent().unwrap();
     fs::create_dir_all(parent_dir)?;
 
-    // Write the downloaded content to the specified file path
     let mut file = File::create(path)?;
     file.write_all(&content)?;
 
@@ -64,7 +61,7 @@ fn calc_dir_size(path: String, from_steam_dir: bool) -> Result<u64, String> {
     let folder_path: PathBuf;
 
     if from_steam_dir {
-        let raw_steam_path = get_steam_path().unwrap(); // Assuming get_steam_path() returns a Result<String, _>
+        let raw_steam_path = get_steam_path().unwrap();
         let steam_path = Path::new(&raw_steam_path);
         let relative_dir = Path::new(&path);
         folder_path = steam_path.join(relative_dir);
@@ -72,17 +69,15 @@ fn calc_dir_size(path: String, from_steam_dir: bool) -> Result<u64, String> {
         folder_path = PathBuf::from(path);
     }
 
-    // Check if the path is a directory or file
     let metadata = match fs::metadata(&folder_path) {
         Ok(metadata) => metadata,
         Err(_) => return Err("Failed to read file/directory metadata".to_string()),
     };
 
     if metadata.is_file() {
-        // If it's a file, calculate file size
         Ok(metadata.len())
-    } else if metadata.is_dir() {
-        // If it's a directory, calculate directory size
+    } 
+    else if metadata.is_dir() {
         match get_folder_size(&folder_path) {
             Ok(size) => Ok(size),
             Err(_) => Err("Failed to calculate folder size".to_string()),
