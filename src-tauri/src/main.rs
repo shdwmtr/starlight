@@ -1,14 +1,17 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use serde::de::value;
 use window_shadows::set_shadow;
 
 mod util {
     pub mod steam;
+    pub mod fs;
 }
 
+use util::fs::delete_recursive;
+
 use util::steam::get_steam_path;
+use util::steam::close_steam_process;
 
 use tauri::Manager;
 use std::fs::File;
@@ -16,7 +19,6 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use reqwest::Client;
 use std::fs;
-use std::time::Instant;
 
 async fn download_file(url: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Create a reqwest Client
@@ -41,7 +43,7 @@ async fn download_file(url: &str, path: &str) -> Result<(), Box<dyn std::error::
 async fn download_file_to_path(url: String, path: String) -> Result<bool, bool> {
     match download_file(&url, &path).await {
         Ok(_) => Ok(true),
-        Err(err) => Err(false),
+        Err(_) => Err(false),
     }
 }
 
@@ -92,24 +94,57 @@ fn calc_dir_size(path: String, from_steam_dir: bool) -> Result<u64, String> {
     }
 }
 
-fn main() {
-    let start_time = Instant::now();
-    let folder_path = "C:/Program Files (x86)/Steam/ext";
-    let total_size = get_folder_size(folder_path);
-    let duration = start_time.elapsed();
-    println!("Total size: {:#?} bytes", total_size.unwrap());
-    println!("Time taken: {:?}", duration);
+fn center_window(window: tauri::Window) {
+    let monitor = window.primary_monitor().unwrap().unwrap();
+    let monitor_size = monitor.size();
+    let window_size = window.outer_size().unwrap();
 
+    let x = (monitor_size.width - window_size.width) / 2;
+    let y = (monitor_size.height - window_size.height) / 2;
+
+    window.set_position(tauri::LogicalPosition { x: x as f64, y: y as f64 }).unwrap();
+}
+
+#[tauri::command]
+fn is_auto_installer() -> bool {
+    let args: Vec<String> = std::env::args().collect();
+    args.contains(&String::from("-auto"))
+}
+
+fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![download_file_to_path, get_steam_path, calc_dir_size])
+        .invoke_handler(tauri::generate_handler![
+            // backend functions
+            download_file_to_path, 
+            get_steam_path, 
+            calc_dir_size, 
+            delete_recursive,
+            close_steam_process,
+            is_auto_installer
+        ])
         .setup(|app| {
             let window = app.get_window("main").unwrap();
+            let mut width = 665.0;
+            let mut height = 460.0;
+        
+            if is_auto_installer() {
+                width = 425.0;
+                height = 175.0;
 
+                match close_steam_process() {
+                    Ok(_) => println!("Closed steam.exe"),
+                    Err(e) => println!("Failed to close steam.exe: {}", e),
+                }
+            }
+            
             #[cfg(debug_assertions)]
             {
                 window.open_devtools();
                 window.close_devtools();
             }
+            window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height })).unwrap();
+            center_window(window.clone());
+            
             set_shadow(&window, true).unwrap();
             Ok(())
         })

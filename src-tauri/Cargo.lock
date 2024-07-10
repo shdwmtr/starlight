@@ -1672,7 +1672,6 @@ dependencies = [
 name = "millennium"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "reqwest",
  "serde",
  "serde_json",
@@ -1680,6 +1679,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tokio",
+ "walkdir",
  "window-shadows",
  "window-vibrancy",
  "winreg 0.52.0",

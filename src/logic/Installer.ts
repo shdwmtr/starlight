@@ -1,11 +1,11 @@
 import { writeTextFile, createDir } from '@tauri-apps/api/fs';
 import { invoke, path } from '@tauri-apps/api';
-import { eInstallMessageType, eInstallType, OnInstallerMessage } from '../components/ForeignFunctions';
+import { Core, eInstallMessageType, eInstallType, OnInstallerMessage } from '../components/ForeignFunctions';
+import { GitHub } from './GitHub';
 
 export class IInstaller {
 
     steamPath: string;
-    API_URL: string = 'https://api.github.com/repos/SteamClientHomebrew/Millennium/releases';
 
     constructor(steamPath: string) {
         console.log('Steam path:', steamPath);
@@ -59,18 +59,16 @@ export class IInstaller {
         await writeTextFile(logFile, JSON.stringify(bufferLogData, null, 4));
     }
 
-    async GetLatestRelease() {
-        const response = await fetch(this.API_URL)
-        const releases = await response.json();
-
-        return releases.filter((release: any) => !release.prerelease)[0];
-    }
-
     async StartInstaller() {
+
+        // kill steam
+        this.LogProgress(`Closing Steam...`)
+        await Core.KillSteam()
+
         try { 
             this.LogProgress(`Fetching releases from GitHub.`)
 
-            const latestRelease = await this.GetLatestRelease();
+            const latestRelease = await GitHub.GetLatestRelease();
             const fileQueryList = latestRelease.assets.map((asset: any) => ({ url: asset.browser_download_url, name: asset.name }));
 
             const downloadLog = []

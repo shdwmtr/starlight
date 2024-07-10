@@ -1,3 +1,13 @@
-export const StartUninstallerCore = async () => {
-    // Add your uninstallation logic here
+
+class IUninstaller {
+
+    steamPath: string;
+
+    constructor(steamPath: string) {
+        this.steamPath = steamPath;
+    }
+
+    async StartUninstaller() {
+
+    }
 }

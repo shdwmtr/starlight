@@ -8,6 +8,7 @@ import { invoke } from '@tauri-apps/api';
 import { open } from '@tauri-apps/api/dialog';
 import { Core, eInstallType } from '../components/ForeignFunctions';
 import { FormatBytes } from '../components/Bytes';
+import { GitHub } from '../logic/GitHub';
 
 const RenderEvaluatedFiles = ({ assets }: { assets: any }) => { 
 
@@ -158,10 +159,8 @@ function InstallerViewModel() {
     const [details, setDetails] = useState<{ details: any; steamPath: any; }>(null as any);
 
     const FetchLatestReleaseInfo = () => {
-        return new Promise((resolve) => {
-            fetch('https://api.github.com/repos/SteamClientHomebrew/Millennium/releases')  
-                .then(response => response.json())
-                .then(json => resolve(json))
+        return new Promise(async (resolve) => {
+            resolve(await GitHub.GetReleaseInfo())
         })
     }
 

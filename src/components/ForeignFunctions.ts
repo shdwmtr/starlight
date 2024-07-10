@@ -2,7 +2,6 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { exit } from '@tauri-apps/api/process';
 import { exists } from '@tauri-apps/api/fs';
 import { IInstaller } from '../logic/Installer';
-import { StartUninstallerCore } from '../logic/Uninstaller';
 
 export enum eInstallMessageType {
     IN_PROGRESS,
@@ -43,7 +42,7 @@ const Core = {
     },
 
     ExitEnvironment: () => {
-        exit().catch((error) => {
+        exit(1).catch((error) => {
             console.error('Failed to exit the app:', error);
         });
     },
@@ -65,11 +64,25 @@ const Core = {
                 break;
             }
             case eInstallType.UNINSTALL: {
-                StartUninstallerCore();
+                const uninstaller = new IUninstaller(steamPath);
+                uninstaller.StartUninstaller();
                 break
             }
         }
     },
+
+    KillSteam: async () => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                invoke('close_steam_process').then(() => {
+                    console.log('Steam killed.');
+                    resolve(true);
+                })
+                .catch(() => resolve(false))
+            }, 1500);
+        })
+    }
+
 }
 
 export { Core }

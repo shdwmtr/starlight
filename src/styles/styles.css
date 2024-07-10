@@ -550,7 +550,7 @@ button.steampath-browse:hover {
   top: 2px;
   width: 3px;
   height: 7px;
-  border: solid rgb(121, 121, 121);
+  border: solid rgb(255, 255, 255);
   border-width: 0 1px 1px 0;
   transform: rotate(45deg);
 }
@@ -589,4 +589,31 @@ label.custom-checkbox p {
 .check {
   width: fit-content;
   padding-right: 10px;
+}
+
+svg.uninstalling-spinner.spinner {
+    scale: 0.7;
+    margin-right: -7px;
+    margin-left: -4px;
+    /* height: 84px; */
+    position: absolute;
+}
+
+p.isUninstallingProp {
+    margin-left: 25px;
+    margin-top: 10px;
+}
+
+svg.uninstallFinishedCheck {
+  height: 17px;
+  width: 17px;
+  position: absolute;
+}
+
+.auto-installer .description {
+  text-align: center;
+}
+
+.auto-installer #install-success {
+  margin-top: 28px;
 }

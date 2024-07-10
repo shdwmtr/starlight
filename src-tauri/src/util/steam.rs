@@ -1,4 +1,3 @@
-use std::io;
 use winreg::enums::*;
 use winreg::RegKey;
 use sysinfo::{System};
@@ -35,7 +34,8 @@ pub fn get_steam_path() -> Result<String, String> {
 }
 
 // todo linux support
-fn close_steam_process() -> Result<(), Box<dyn std::error::Error>> {
+#[command]
+pub fn close_steam_process() -> Result<bool, String> {
     let mut system = System::new_all();
     system.refresh_all();
 
@@ -45,7 +45,7 @@ fn close_steam_process() -> Result<(), Box<dyn std::error::Error>> {
 
             if process.kill() {
                 println!("Successfully killed steam.exe");
-                return Ok(());
+                return Ok(true);
             } else {
                 return Err("Failed to kill steam.exe".into());
             }
