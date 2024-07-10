@@ -1,70 +1,44 @@
 name: Build Installer
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    permissions: write-all
-    name: Build Installer
-    runs-on: windows-latest # Run script on windows system
-    
+    runs-on: windows-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20' # Use NodeJs 20
-        
-      - name: Install Dependencies
-        run: npm install # Install dependecies in package.json
-        
-      - name: Compile and Build Installer
-        run: npm run build # Run the build script in package.json
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Calculate Artifact Hash
-        id: calculate-hash
-        run: |
-            echo "::set-output name=hash::$(sha256sum build/output/Millennium.Installer-Windows.exe | cut -d ' ' -f 1)"
-          
-      - name: Create Checksum File
-        run: |
-            echo "${{ steps.calculate-hash.outputs.hash }}" > checksum.sha256
-        working-directory: build/output/
-  
-      - name: Create Release Draft
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: 1.0.0 # You can specify your version here
-          release_name: Millennium.Installer v1.0.0 # You can specify your release name here
-          draft: true
-          prerelease: false # Change to true if it's a pre-release
-          body: |
-            Patch Notes:
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-            built from source [here](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) using actions
+    - name: Install dependencies
+      run: npm install
 
-      - name: Upload Installer Executable
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/output/Millennium.Installer-Windows.exe
-          asset_name: Millennium.Installer-Windows.exe
-          asset_content_type: application/octet-stream
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable-x86_64-pc-windows-msvc
+        profile: minimal
+        override: true
 
-      - name: Upload Checksum File
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/output/checksum.sha256
-          asset_name: checksum.sha256
-          asset_content_type: text/plain
+    - name: Install Tauri CLI
+      run: cargo install tauri-cli
+
+    - name: Build the Tauri application
+      run: npm run tauri build
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: tauri-app
+        path: src-tauri/target/release/bundle/

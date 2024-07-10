@@ -1,0 +1,32 @@
+[package]
+name = "millennium"
+version = "0.0.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+tauri = { version = "1.7.1", features = [ "window-all", "process-all", "path-all", "http-all", "fs-all", "dialog-all", "shell-open"] }
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12.5", features = ["json", "blocking"] }
+tokio = { version = "1.38.0", features = ["full"] }
+sysinfo = "0.30.13"
+
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52.0"
+window-vibrancy = "0.5.0"
+window-shadows = "0.2.2"
+
+[target.'cfg(linux)'.dependencies]
+psutil = "3.3.0"
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

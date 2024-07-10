@@ -1,58 +1,37 @@
-<img src="https://i.imgur.com/9qYPFSA.png" alt="Alt text" width="40">
-
-## [SCH] Millennium Installer
+<div align="center">
+<h3><img align="center" height="40" src="https://i.imgur.com/9qYPFSA.png"> &nbsp; &nbsp;Millennium Installer</h3>
 
 A simple standalone program which automates the installation, removal and maintenance of Millennium.
 
-[![GitHub Releases][downloads-badge]][downloads-link] [![Discord][discord-badge]][discord-link] [![Website][website-badge]][website-link] [![Docs][docs-badge]][docs-link]
+![userlmn_5792a2476abb30c9e3abc0df0f95e6e2](https://github.com/SteamClientHomebrew/Installer/assets/81448108/0554303a-b0a3-491a-b11c-73fb60451d40)
 
-[downloads-badge]: https://img.shields.io/github/downloads/shadowmonster99/millennium-steam-binaries/total?labelColor=0c0d10&color=3a71c1&style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjI1IDM4LjVIMzUuNzVDMzYuNzE2NSAzOC41IDM3LjUgMzkuMjgzNSAzNy41IDQwLjI1QzM3LjUgNDEuMTY4MiAzNi43OTI5IDQxLjkyMTIgMzUuODkzNSA0MS45OTQyTDM1Ljc1IDQySDEyLjI1QzExLjI4MzUgNDIgMTAuNSA0MS4yMTY1IDEwLjUgNDAuMjVDMTAuNSAzOS4zMzE4IDExLjIwNzEgMzguNTc4OCAxMi4xMDY1IDM4LjUwNThMMTIuMjUgMzguNUgzNS43NUgxMi4yNVpNMjMuNjA2NSA2LjI1NThMMjMuNzUgNi4yNUMyNC42NjgyIDYuMjUgMjUuNDIxMiA2Ljk1NzExIDI1LjQ5NDIgNy44NTY0N0wyNS41IDhWMjkuMzMzTDMwLjI5MzEgMjQuNTQwN0MzMC45NzY1IDIzLjg1NzMgMzIuMDg0NiAyMy44NTczIDMyLjc2OCAyNC41NDA3QzMzLjQ1MTQgMjUuMjI0MiAzMy40NTE0IDI2LjMzMjIgMzIuNzY4IDI3LjAxNTZMMjQuOTg5OCAzNC43OTM4QzI0LjMwNjQgMzUuNDc3MiAyMy4xOTg0IDM1LjQ3NzIgMjIuNTE1IDM0Ljc5MzhMMTQuNzM2OCAyNy4wMTU2QzE0LjA1MzQgMjYuMzMyMiAxNC4wNTM0IDI1LjIyNDIgMTQuNzM2OCAyNC41NDA3QzE1LjQyMDIgMjMuODU3MyAxNi41MjgyIDIzLjg1NzMgMTcuMjExNyAyNC41NDA3TDIyIDI5LjMyOVY4QzIyIDcuMDgxODMgMjIuNzA3MSA2LjMyODgxIDIzLjYwNjUgNi4yNTU4TDIzLjc1IDYuMjVMMjMuNjA2NSA2LjI1NThaIiBmaWxsPSIjM2E3MWMxIi8+Cjwvc3ZnPgo=
-[downloads-link]: #auto-installers
+</div>
 
-[build-badge]: https://img.shields.io/github/actions/workflow/status/SteamClientHomebrew/Installer/build.yml?branch=main&logo=Github&logoColor=3a71c1&labelColor=0c0d10&color=3a71c1&style=for-the-badge
-[build-link]: https://github.com/SteamClientHomebrew/Installer/actions/workflows/build.yml
+## Installing
 
-[discord-badge]: https://img.shields.io/badge/discord-green?labelColor=0c0d10&color=7289da&style=for-the-badge&logo=discord&logoColor=7289da
-[discord-link]: https://millennium.web.app/discord
+  The installer current only supports Windows. See [this page](https://github.com/SteamClientHomebrew/Millennium/wiki/Getting-Started#automatic) for a more detailed guide.
 
-[website-badge]: https://img.shields.io/badge/website-green?labelColor=0c0d10&color=3a71c1&style=for-the-badge&logo=firefoxbrowser&logoColor=3a71c1
-[website-link]: https://millennium.web.app/
+  [![Static Badge](https://img.shields.io/badge/Download%20Windows-fff?style=for-the-badge&logo=windows&logoColor=white&color=2D5CBF)][windows-link]
 
-[docs-badge]: https://img.shields.io/badge/docs-green?labelColor=0c0d10&color=3a71c1&style=for-the-badge&logo=readthedocs&logoColor=3a71c1
-[docs-link]: https://millennium.gitbook.io/steam-patcher/
+  [windows-link]: https://github.com/SteamClientHomebrew/Installer/releases/latest/download/Millennium.Installer-Windows.exe
+  [windows-badge]: https://img.shields.io/badge/Windows%20(10+)-3a71c1?logo=Windows&logoColor=white&labelColor=111111&color=3a71c1&style=for-the-badge
 
 
-<br>
+&nbsp;
 
-## Prerequisites
-- [Git](https://git-scm.com)
-- [Node.js](https://nodejs.org/en/)
-- npm (pre-installed with node)
+## Building
+
+### Prerequisites
+- [git](https://git-scm.com) 
+- [pnpm](https://pnpm.io/)
+- [rust](https://www.rust-lang.org/) 
 - Command line of your choice.
+&nbsp;
+```ps1
+$ git clone https://github.com/SteamClientHomebrew/Installer.git && cd Installer
+$ pnpm install
+$ pnpm tauri dev
 
-## Building 
-
-### Clone the repository.
-```ps
-git clone https://github.com/SteamClientHomebrew/Installer.git && cd Installer
+# Building release
+# $ pnpm tauri build
 ```
-This will create a local copy of this repository and navigate you to the root folder of the repository.
-
-### Install Dependencies
-```ps
-npm install
-```
-This installs node module dependencies needed
-
-### Start Development
-```ps
-npm run dev
-```
-This runs the installer in development mode
-
-
-### Compiling
-```ps
-npm run build
-```
-compile the installer to an executable
