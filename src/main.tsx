@@ -1,32 +1,36 @@
-import ReactDOM       from "react-dom/client";
-import SelectPanel    from './routes/Controller';
-import Installer      from './routes/Installer';
-import InstallPanel   from './routes/InstallPanel';
-import Uninstaller    from './routes/Uninstaller';
-import UninstallPanel from './routes/UninstallPanel';
-import AutoInstaller  from './routes/AutoUpdater';
+import ReactDOM from "react-dom/client";
+import SelectPanel from "./routes/Controller";
+import Installer from "./routes/installer";
+import InstallPanel from "./routes/InstallPanel";
+import Uninstaller from "./routes/uninstaller";
+import UninstallPanel from "./routes/UninstallPanel";
+import AutoInstaller from "./routes/AutoUpdater";
 
 import { invoke } from "@tauri-apps/api/tauri";
-import { useEffect, useState } from 'react';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 
 import UninstallerSelectComponents from "./routes/SelectUninstallComponents";
-import './styles/styles.css';
+import "./styles/styles.css";
 
 function App() {
   const manualInstallerRoute = createHashRouter([
-    { path: "/",                     element: <SelectPanel/>                 },
-    { path: "/install",              element: <InstallPanel/>                },
-    { path: "/run-install",          element: <Installer/>                   },
-    { path: "/uninstall",            element: <UninstallPanel/>              },
-    { path: "/run-uninstall",        element: <Uninstaller/>                 },
-    { path: "/uninstall-components", element: <UninstallerSelectComponents/> },
+    { path: "/", element: <SelectPanel /> },
+    { path: "/install", element: <InstallPanel /> },
+    { path: "/run-install", element: <Installer /> },
+    { path: "/uninstall", element: <UninstallPanel /> },
+    { path: "/run-uninstall", element: <Uninstaller /> },
+    { path: "/uninstall-components", element: <UninstallerSelectComponents /> },
   ]);
 
-  const autoInstallerRoute = createHashRouter([{ path: "/", element: <AutoInstaller/> }])
+  const autoInstallerRoute = createHashRouter([
+    { path: "/", element: <AutoInstaller /> },
+  ]);
 
   enum eInstallerStatusProps {
-    AUTO, MANUAL, UNSET
+    AUTO,
+    MANUAL,
+    UNSET,
   }
 
   const InstallerStatus = new Map<eInstallerStatusProps, any>([
@@ -35,19 +39,31 @@ function App() {
     [eInstallerStatusProps.AUTO, autoInstallerRoute],
   ]);
 
-  const [installerProps, setInstallerProps] = useState(InstallerStatus.get(eInstallerStatusProps.UNSET));
+  const [installerProps, setInstallerProps] = useState(
+    InstallerStatus.get(eInstallerStatusProps.UNSET),
+  );
 
   const GetViewPortInfo = () => {
-    invoke('is_auto_installer').then((response: any) => {
-      setInstallerProps(response ? eInstallerStatusProps.AUTO : eInstallerStatusProps.MANUAL);
+    invoke("is_auto_installer").then((response: any) => {
+      setInstallerProps(
+        response ? eInstallerStatusProps.AUTO : eInstallerStatusProps.MANUAL,
+      );
     });
-  }
+  };
 
-  useEffect(() => GetViewPortInfo(), [])
+  useEffect(() => GetViewPortInfo(), []);
 
-  return installerProps != InstallerStatus.get(eInstallerStatusProps.UNSET)
-    && <RouterProvider router={InstallerStatus.get(installerProps)}></RouterProvider>;
+  return (
+    installerProps != InstallerStatus.get(eInstallerStatusProps.UNSET) && (
+      <RouterProvider
+        router={InstallerStatus.get(installerProps)}
+      ></RouterProvider>
+    )
+  );
 }
+
 export default App;
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(<App/>);
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <App />,
+);

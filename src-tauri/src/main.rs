@@ -1,24 +1,24 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use window_shadows::set_shadow;
+use std::fs;
+use std::fs::File;
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+
+use reqwest::Client;
+use tauri::Manager;
+
+use util::fs::delete_recursive;
+use util::steam::close_steam_process;
+use util::steam::get_steam_path;
+
+use crate::util::steam::__cmd__close_steam_process;
 
 mod util {
     pub mod steam;
     pub mod fs;
 }
-
-use util::fs::delete_recursive;
-
-use util::steam::get_steam_path;
-use util::steam::close_steam_process;
-
-use tauri::Manager;
-use std::fs::File;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
-use reqwest::Client;
-use std::fs;
 
 async fn download_file(url: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Create a reqwest Client
@@ -30,7 +30,7 @@ async fn download_file(url: &str, path: &str) -> Result<(), Box<dyn std::error::
 
     // Ensure the parent directory exists
     let parent_dir = Path::new(path).parent().unwrap();
-    std::fs::create_dir_all(parent_dir)?;
+    fs::create_dir_all(parent_dir)?;
 
     // Write the downloaded content to the specified file path
     let mut file = File::create(path)?;
@@ -126,7 +126,7 @@ fn main() {
             let window = app.get_window("main").unwrap();
             let mut width = 665.0;
             let mut height = 460.0;
-        
+
             if is_auto_installer() {
                 width = 425.0;
                 height = 175.0;
@@ -136,16 +136,21 @@ fn main() {
                     Err(e) => println!("Failed to close steam.exe: {}", e),
                 }
             }
-            
-            #[cfg(debug_assertions)]
+
+            #[cfg(target_os = "windows")]
             {
-                window.open_devtools();
-                window.close_devtools();
+                #[cfg(debug_assertions)]
+                {
+                    window.open_devtools();
+                    window.close_devtools();
+                }
+                use window_shadows::set_shadow;
+                set_shadow(&window, true).unwrap();
             }
+
             window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height })).unwrap();
             center_window(window.clone());
-            
-            set_shadow(&window, true).unwrap();
+
             Ok(())
         })
         .run(tauri::generate_context!())
