@@ -1,3 +1,9 @@
+> [!WARNING]  
+> This repository has been archived as we've moved to a simpler installer.
+
+&nbsp;
+
+
 <div align="center">
 <h3><img align="center" height="40" src="https://i.imgur.com/9qYPFSA.png"> &nbsp; &nbsp;Millennium Installer</h3>
 
