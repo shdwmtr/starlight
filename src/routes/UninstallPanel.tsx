@@ -60,7 +60,7 @@ function UninstallerViewModal() {
 
 					<motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.8, ease: [0, 0.71, 0.2, 1.01] }} className='options'>
 						<div className='reason' onClick={e => ToggleTagState(e, "not interested")    }> Not interested anymore. </div>
-						<div className='reason' onClick={e => ToggleTagState(e, "buggy")             }> Buggy, doesn't Work as intended </div>
+						<div className='reason' onClick={e => ToggleTagState(e, "buggy")             }> Buggy, doesn't work as intended </div>
 						<div className='reason' onClick={e => ToggleTagState(e, "not enough content")}> Not enough community made themes </div>
 						<div className='reason' onClick={e => ToggleTagState(e, "other")             }> Other </div>
 					</motion.div>

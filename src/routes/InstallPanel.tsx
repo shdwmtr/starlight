@@ -9,31 +9,14 @@ import { open } from '@tauri-apps/api/dialog';
 import { Core, eInstallType } from '../util/ForeignFunctions';
 import { FormatBytes } from '../util/Bytes';
 import { GitHub } from '../logic/GitHub';
+import { FooterLegend } from '../components/Footer';
 
-const RenderEvaluatedFiles = ({ assets }: { assets: any }) => { 
-
-    return (
-        <ul>
-            {/* Render all asset size */}
-            {assets.map((asset: any) => { return (<li>{asset?.name} ({FormatBytes(asset.size)})</li>) })}
-            {/* Calculate total download size from all assets */}
-            <li>Total download size: ({ FormatBytes(assets.reduce((totalSize: number, asset: any) => totalSize + asset.size, 0)) }) </li>
-        </ul>
-    )
-}
-
-const RenderDownloadCount = ({ details }: { details: any }) => {
-
-    const CalculateCount = () => {
-        return details?.reduce((totalDownloads: any, release: any) => {
-            return totalDownloads + release?.assets?.reduce((assetCount: any, asset: any) => {
-                return assetCount + (asset.download_count || 0);
-            }, 0)
-        }, 0)
-    }
-
-    return (<>{` ${CalculateCount()} `}</>)
-}
+const RenderEvaluatedFiles = ({ assets }: { assets: any }) => (
+    <ul>
+        {assets.map((asset: any, key: number) => { return (<li key={key}>{asset?.name} ({FormatBytes(asset.size)})</li>) })}
+        <li>Total download size: ({ FormatBytes(assets.reduce((totalSize: number, asset: any) => totalSize + asset.size, 0)) }) </li>
+    </ul>
+)
 
 const RenderFooterLegend = ({ history, steamPath }: { history: NavigateFunction, steamPath: string }) => {
 
@@ -43,11 +26,7 @@ const RenderFooterLegend = ({ history, steamPath }: { history: NavigateFunction,
     }
 
     return (
-        <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} style={{ position: "absolute", bottom: 0, left: 0, right: 0 }} transition={{ delay: 0.2 }} className="footer-content">        
-            <p className="tooltip">
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACjklEQVR4nO1ZyW4TQRAdARduLCe2E/AHbDd/AFI89SpdZZL/YD04h+BciQDxD2xCJArfAcoNLiwHUGKuOFyCHrFZZEUznmnPDMJPKsmS5Zn3uqq7qp+TZIYZZiiNbrd7QMSuiPptwJ4JbBOwrwL7zhh+3hT1p4DdUu1c5m+SuiGyeFrUVgT+Ceq7k4V9FPVeCOFU5cTTND0O+COB70xOfCwGgD8MIRyrhLzMWwfq2xGI/x2wLdVgUyPearUOcdWjE9cxIQ/4rqjkQwiHAVubOnndC1F/yXfGIn8Qas+rIo/fmViLkolKykb3y4Tdj7FhayGPkQjpzBciz2ONJ0PdAqC+zWO7htKxdTYpNjvANiotJWGHLdmk+IzR89ptP1MyC4O5uc7J/ALUVsrXblQBu4DdzX1sFpttxl64QRF75O1V6QWBv881AHKqLE1+SpGGcClTAOB36iaK/bKgfiNbQB1dV/OGPckuIV5GYqwW/G2a+lkGP0cRAH+TQ4D3I6W79+uZ6r04Amwrj4CdSAKW/hCwFKmMBv+FgH5jBSBXCUXaxFMR4NmbmLZIgwU8zs4AvZ3GCrDrmQJoOjVVgGrnQqYADkxQ+9A0AZJ3mIvVeKILUFvORf7nC3mLomPWHAGDiS40BO2+xowSsNWkmP9Z/FLPAS6EcA64dh5q74oLsC9XFxaOJkVAr7Js7ZaNVB1JGdCrrIu8qN1LoliLkbpzLdYiQaOVhmuF5F9EM3dH4GrQYKqA/CqznkwL9Cp5MsQnb59Lb9i84LE2zMag9EaFfeOqt9vtI0nVYHekY1ZkduJsI2rLIosnkrrBIYumE+A3aX3w4sGbHa+nw+gL7DW/o7cjYhcb8TfrDDMk/z5+AHLrqx1z8KkFAAAAAElFTkSuQmCC"/>
-                Millennium is not affiliated with Steam®, Valve, or any of their partners
-            </p>
+        <FooterLegend>
             <div className="flex-box">
                 <div className='info-container'>
                     <a id="DiscordLink" target='_blank' rel="noreferrer noopener" href="https://steambrew.app/discord" className="social-icon discord">
@@ -65,7 +44,7 @@ const RenderFooterLegend = ({ history, steamPath }: { history: NavigateFunction,
                 </div>
                 <button id="install" className="btn next" onClick={NavigateToInstaller}>Install</button>
             </div>
-        </motion.div>   
+        </FooterLegend>  
     )
 }
 
@@ -93,9 +72,10 @@ interface InstallerViewModelProps {
     HistoryRouter: NavigateFunction;
     details: any;
     steamPath: string;
+    asset: any;
 }
 
-const ReleaseInfoHasMounted: React.FC<InstallerViewModelProps> = ({ HistoryRouter, details, steamPath }) => {
+const ReleaseInfoHasMounted: React.FC<InstallerViewModelProps> = ({ HistoryRouter, details, asset, steamPath }) => {
 
     const releaseInfo = details[0];
     const [steamPathBuffer, setSteamPath] = useState(steamPath);
@@ -121,21 +101,16 @@ const ReleaseInfoHasMounted: React.FC<InstallerViewModelProps> = ({ HistoryRoute
         <div className="content-box" id='installer-pane'>
             <div className="container uninstall-container" >
                 <div className='options'>
-                    <motion.div className='header' initial={{ y: "-100%" }} animate={{ y: 0 }}>
-                        Install Millennium v{releaseInfo?.tag_name} ✨
-                    </motion.div>
-                    <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.8, ease: [0, 0.71, 0.2, 1.01] }} className='description'>
-                        
-                        Released: <TimestampConverter timestamp={releaseInfo?.published_at} /> 
-                        {/* • <RenderDownloadCount details={details}/> Downloads<br /> */}
+                    <motion.div className='header' initial={{ y: "-100%" }} animate={{ y: 0 }}>Install Millennium {releaseInfo?.tag_name} ✨</motion.div>
 
+                    <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.8, ease: [0, 0.71, 0.2, 1.01] }} className='description'>        
+                        Released: <TimestampConverter timestamp={releaseInfo?.published_at} /> 
                         <div className='hor-seperator'></div>
 
-                        <b>Steam Path:</b>
-                        <br/>
+                        <b>Steam Path:</b><br/>
 
                         <div className='steampath-entry'>
-                            <input className='steampath-textentry' value={steamPathBuffer}></input>
+                            <input className='steampath-textentry' defaultValue={steamPathBuffer} readOnly={true}></input>
                             <button className='steampath-browse' onClick={BrowseSteamDirectory}>...</button>
                         </div>
                         <Tooltip anchorSelect=".steampath-browse" place="bottom-end">Browse Files</Tooltip>
@@ -144,7 +119,7 @@ const ReleaseInfoHasMounted: React.FC<InstallerViewModelProps> = ({ HistoryRoute
                         <br/><br/>
 
                         Evaluated files for install
-                        <RenderEvaluatedFiles assets={releaseInfo?.assets}/>
+                        <RenderEvaluatedFiles assets={asset}/>
                     </motion.div>
                 </div>
             </div>
@@ -156,11 +131,17 @@ const ReleaseInfoHasMounted: React.FC<InstallerViewModelProps> = ({ HistoryRoute
 function InstallerViewModel() {
 
     const HistoryRouter = useNavigate();
-    const [details, setDetails] = useState<{ details: any; steamPath: any; }>(null as any);
+    const [details, setDetails] = useState<{ details: any; asset: any; steamPath: any; }>(null as any);
 
-    const FetchLatestReleaseInfo = () => {
+    const FetchReleaseInfo = (): any => {
         return new Promise(async (resolve) => {
             resolve(await GitHub.GetReleaseInfo())
+        })
+    }
+
+    const FetchLatestReleaseInfo = (): any => {
+        return new Promise(async (resolve) => {
+            resolve(await GitHub.GetLatestRelease())
         })
     }
 
@@ -175,8 +156,8 @@ function InstallerViewModel() {
     }
 
     const FetchComponents = () => {
-        Promise.all([FetchLatestReleaseInfo(), FetchSteamPath()]).then(([releaseInfo, steamPath]) => {
-            setDetails({ details: releaseInfo, steamPath: steamPath })
+        Promise.all([FetchReleaseInfo(), FetchLatestReleaseInfo(), FetchSteamPath()]).then(([releaseInfo, assetInfo, steamPath]) => {
+            setDetails({ details: releaseInfo, asset: assetInfo, steamPath: steamPath })
         })
     }
 
@@ -187,7 +168,7 @@ function InstallerViewModel() {
         <TitleBar bCanGoBack={true} bIsBusy={false}/>
         {   
             details === null ? 
-            <IsLoadingComponent/> : <ReleaseInfoHasMounted HistoryRouter={HistoryRouter} details={details?.details} steamPath={details?.steamPath}/>
+            <IsLoadingComponent/> : <ReleaseInfoHasMounted HistoryRouter={HistoryRouter} details={details?.details} asset={details?.asset} steamPath={details?.steamPath}/>
         }    
     </>)
   }

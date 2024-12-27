@@ -27,7 +27,7 @@ declare global {
     }
 }
 
-export const OnInstallerMessage = (type: eInstallType, message: string, identifier: eInstallMessageType) => { 
+export const EmitInstallerMessage = (type: eInstallType, message: string, identifier: eInstallMessageType) => { 
     g_installerEventListeners.forEach((listener) => {
         if (listener[1] == type) {
             listener[0]({ message, identifier });

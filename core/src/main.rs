@@ -12,10 +12,36 @@ use tauri::Manager;
 use util::fs::delete_recursive;
 use util::steam::close_steam_process;
 use util::steam::get_steam_path;
+use zip::ZipArchive;
 
 mod util {
     pub mod steam;
     pub mod fs;
+}
+
+#[tauri::command]
+fn extract_zip(zip_path: String, dest_dir: String) -> Result<(), String> {
+    let path = Path::new(&zip_path);
+    let file = File::open(&path).map_err(|e| format!("Failed to open zip file: {}", e))?;
+    let mut archive = ZipArchive::new(file).map_err(|e| format!("Failed to read zip file: {}", e))?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i).map_err(|e| format!("Failed to access file in archive: {}", e))?;
+        let out_path = Path::new(&dest_dir).join(file.mangled_name());
+
+        if file.name().ends_with('/') {
+            std::fs::create_dir_all(&out_path).map_err(|e| format!("Failed to create directory: {}", e))?;
+        } else {
+            if let Some(parent) = out_path.parent() {
+                if !parent.exists() {
+                    std::fs::create_dir_all(&parent).map_err(|e| format!("Failed to create parent directories: {}", e))?;
+                }
+            }
+            let mut outfile = File::create(&out_path).map_err(|e| format!("Failed to create output file: {}", e))?;
+            std::io::copy(&mut file, &mut outfile).map_err(|e| format!("Failed to copy file contents: {}", e))?;
+        }
+    }
+    Ok(())
 }
 
 async fn download_file(url: &str, path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -112,7 +138,9 @@ fn main() {
             calc_dir_size, 
             delete_recursive,
             close_steam_process,
-            is_auto_installer
+            is_auto_installer,
+            extract_zip
+
         ]).setup(|app| {
         let window = app.get_window("main").unwrap();
         let mut width = 665.0;

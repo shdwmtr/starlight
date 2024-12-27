@@ -1,6 +1,6 @@
-import { writeTextFile, createDir } from '@tauri-apps/api/fs';
-import { invoke, path } from '@tauri-apps/api';
-import { Core, eInstallMessageType, eInstallType, OnInstallerMessage } from '../util/ForeignFunctions';
+import { invoke } from '@tauri-apps/api';
+import { removeFile } from "@tauri-apps/api/fs";
+import { Core, eInstallMessageType, eInstallType, EmitInstallerMessage } from '../util/ForeignFunctions';
 import { GitHub } from './GitHub';
 
 export class IInstaller {
@@ -13,7 +13,7 @@ export class IInstaller {
     }
 
     async LogProgress(message: string) {
-        OnInstallerMessage(eInstallType.INSTALL, message, eInstallMessageType.IN_PROGRESS);
+        EmitInstallerMessage(eInstallType.INSTALL, message, eInstallMessageType.IN_PROGRESS);
     }
 
     async DownloadFile(url: string, path: string, fileName: string) {
@@ -35,50 +35,59 @@ export class IInstaller {
         })
     }
 
-    async InstallerFinished(downloadLog: Array<any>) {
-        const allDownloadsSuccessful = downloadLog.every((log) => log.success);
+    async DeleteArchive(filePath: string) {
+        try {
+            await removeFile(filePath);
+            console.log(`File deleted successfully: ${filePath}`);
+            return true;
+        } catch (error) {
+            console.error(`Failed to delete file: ${filePath}`, error);
+            return false;
+        }
+    }
 
-        if (allDownloadsSuccessful) {
-            OnInstallerMessage(eInstallType.INSTALL, 'All downloads completed successfully.', eInstallMessageType.FINISH_SUCCESS);
+    async ExtractDownloadedFiles(releaseName: string) {
+        try {
+            await invoke("extract_zip", { zipPath: [this.steamPath, releaseName].join("/"), destDir: this.steamPath });
+            return true;
         } 
-        else {
-            const failedDownloads = downloadLog.filter((log) => !log.success);
-            const failedDownloadNames = failedDownloads.map((log) => log.name);
-            OnInstallerMessage(eInstallType.INSTALL, `Failed to download: ${failedDownloadNames.join(', ')}`, eInstallMessageType.FINISH_FAILED);
+        catch (error) {
+            console.error("Failed to extract zip file:", error);
+            return false;
         }
-
-        const parentPath = await path.resolve(this.steamPath, "ext", "logs");
-        const logFile = await path.resolve(parentPath, "fs_log.log");
-
-        const bufferLogData = {
-            downloads: downloadLog,
-            path: this.steamPath
-        }
-
-        await createDir(parentPath, { recursive: true });
-        await writeTextFile(logFile, JSON.stringify(bufferLogData, null, 4));
     }
 
     async StartInstaller() {
 
-        // kill steam
         this.LogProgress(`Closing Steam...`)
         await Core.KillSteam()
 
         try { 
             this.LogProgress(`Fetching releases from GitHub.`)
 
-            const latestRelease = await GitHub.GetLatestRelease();
-            const fileQueryList = latestRelease.assets.map((asset: any) => ({ url: asset.browser_download_url, name: asset.name }));
+            const latestRelease = (await GitHub.GetLatestRelease())[0];
+            const downloadSuccess = await this.DownloadFile(latestRelease.browser_download_url, this.steamPath, latestRelease.name) 
 
-            const downloadLog = []
-            for (const file of fileQueryList) {
-                downloadLog.push({ 
-                    name: file.name, success: await this.DownloadFile(file.url, this.steamPath, file.name) 
-                });
+            if (!downloadSuccess) {
+                EmitInstallerMessage(eInstallType.INSTALL, `Failed to download: ${latestRelease.name}`, eInstallMessageType.FINISH_FAILED);
+                return;
             }
             
-            this.InstallerFinished(downloadLog)
+            const extractSuccess = await this.ExtractDownloadedFiles(latestRelease.name);
+
+            if (!extractSuccess) {
+                EmitInstallerMessage(eInstallType.INSTALL, `Failed to extract: ${latestRelease.name}`, eInstallMessageType.FINISH_FAILED);
+                return;
+            }
+
+            const deleteSuccess = await this.DeleteArchive([this.steamPath, latestRelease.name].join("/"));
+
+            if (!deleteSuccess) {
+                EmitInstallerMessage(eInstallType.INSTALL, `Failed to delete: ${latestRelease.name}`, eInstallMessageType.FINISH_FAILED);
+                return;
+            }
+
+            EmitInstallerMessage(eInstallType.INSTALL, 'All downloads completed successfully.', eInstallMessageType.FINISH_SUCCESS);
         } 
         catch (error) {
             console.error('Error fetching releases:', error);
