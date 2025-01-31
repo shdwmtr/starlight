@@ -1,131 +1,74 @@
 #include <vector>
 #include <algorithm>
 #include <imgui.h>
+#include <router.h>
+#include <math.h>
 
-enum Route {
-    HOME,
-    INSTALLER_PROMPT,
-    UNINSTALLER_SELECT_REASONS,
-    INSTALLER,
-    UNINSTALLER_PROMPT,
-    UNINSTALLER
-};
-
-struct RouteNode {
-    Route route;
-    std::vector<RouteNode*> next;
-    RouteNode* parent = nullptr;  // Add parent pointer
-};
-
-// Define nodes
-RouteNode home = { HOME, {} };
-RouteNode installerSelect = { INSTALLER_PROMPT, {} };
-RouteNode uninstallerSelectReasons = { UNINSTALLER_SELECT_REASONS, {} };
-RouteNode installer = { INSTALLER, {} };
-RouteNode uninstallSelect = { UNINSTALLER_PROMPT, {} };
-RouteNode uninstaller = { UNINSTALLER, {} };
-
-void initializeRoutes() {
-    // Set up tree structure and parent references
-    home.next.push_back(&installerSelect);
-    home.next.push_back(&uninstallerSelectReasons);
-
-    installerSelect.parent = &home;
-    uninstallerSelectReasons.parent = &home;
-
-    installerSelect.next.push_back(&installer);
-    installer.parent = &installerSelect;
-
-    uninstallerSelectReasons.next.push_back(&uninstallSelect);
-    uninstallSelect.parent = &uninstallerSelectReasons;
-
-    uninstallSelect.next.push_back(&uninstaller);
-    uninstaller.parent = &uninstallSelect;
+float easeInOut(float t) 
+{
+    return t < 0.5f ? 4.0f * t * t * t : 1.0f - pow(-2.0f * t + 2.0f, 3) / 2.0f;
 }
 
-class Router {
-public:
-    Router();
-
-    void route(Route route);
-    void goBack();
-    void goForward();
-    void goHome();
-    void goInstallerPrompt();
-    void goInstaller();
-    void goUninstallerSelectReasons();
-    void goUninstallerPrompt();
-    void goUninstaller();
-
-    Route getCurrentRoute();
-    float getRoutePosition();
-
-private:
-    RouteNode* currentRouteNode;
-};
-
-Router::Router() {
-    initializeRoutes();
-    currentRouteNode = &home;
+void RouterNav::navigateNext() 
+{
+    if (currentIndex + 1 < components.size() && !isAnimating) 
+    {
+        startAnimation(AnimationDirection::FORWARD);
+    }
 }
 
-void Router::route(Route route) {
-    for (auto& node : currentRouteNode->next) {
-        if (node->route == route) {
-            currentRouteNode = node;
-            break;
+void RouterNav::navigateBack() 
+{
+    if (currentIndex > 0 && !isAnimating) 
+    {
+        startAnimation(AnimationDirection::BACKWARD);
+    }
+}
+
+Component RouterNav::getCurrentComponent() const 
+{
+    return components[currentIndex];
+}
+
+Component RouterNav::getTransitioningComponent() const 
+{
+    return isAnimating ? components[targetIndex] : nullptr;
+}
+
+void RouterNav::update() 
+{
+    float deltaTime = ImGui::GetIO().DeltaTime;
+    if (isAnimating) 
+    {
+        animTime += deltaTime / animationDuration;
+        if (animTime >= 1.0f) 
+        {
+            animTime = 1.0f;
+            isAnimating = false;
+            currentIndex = targetIndex;
         }
     }
 }
 
-void Router::goBack() {
-    if (currentRouteNode->parent) {
-        currentRouteNode = currentRouteNode->parent;
-    }
+float RouterNav::getCurrentOffset(float viewportWidth) const 
+{
+    return isAnimating ? lerp(0.0f, -viewportWidth * animDirection, easeInOut(animTime)) : 0.0f;
 }
 
-void Router::goForward() {
-    if (!currentRouteNode->next.empty()) {
-        currentRouteNode = currentRouteNode->next[0];
-    }
+float RouterNav::getTransitioningOffset(float viewportWidth) const 
+{
+    return isAnimating ? lerp(viewportWidth * animDirection, 0.0f, easeInOut(animTime)) : 0.0f;
 }
 
-void Router::goHome() {
-    currentRouteNode = &home;
+float RouterNav::lerp(float a, float b, float t) const 
+{
+    return a + (b - a) * t;
 }
 
-void Router::goInstallerPrompt() {
-    currentRouteNode = &installerSelect;
-}
-
-void Router::goInstaller() {
-    currentRouteNode = &installer;
-}
-
-void Router::goUninstallerSelectReasons() {
-    currentRouteNode = &uninstallerSelectReasons;
-}
-
-void Router::goUninstallerPrompt() {
-    currentRouteNode = &uninstallSelect;
-}
-
-void Router::goUninstaller() {
-    currentRouteNode = &uninstaller;
-}
-
-Route Router::getCurrentRoute() {
-    return currentRouteNode->route;
-}
-
-float Router::getRoutePosition() {
-    float position = 0.0f;
-    RouteNode* node = currentRouteNode;
-
-    while (node->parent) { // Traverse back using parent pointers
-        node = node->parent;
-        position += 1.0f;
-    }
-
-    return -position * ImGui::GetMainViewport()->Size.x;
+void RouterNav::startAnimation(int direction)
+{
+    isAnimating = true;
+    animTime = 0.0f;
+    animDirection = direction;
+    targetIndex = currentIndex + direction;
 }

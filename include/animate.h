@@ -25,7 +25,6 @@ float SmoothFloat(
     std::tuple<float, float> colorTransition = std::make_tuple(0.f, 0.f)
 );
 
-float TransitionFlatColor(const std::string& id, float lowerBound, float upperBound, bool currentState, float duration);
+float EaseInOutFloat(const std::string& id, float lowerBound, float upperBound, bool currentState, float duration);
 
-float AnimateRouteTransition(std::shared_ptr<Router> routerPtr);
 float EaseOutBack(float t, float b, float c, float d, float overshoot = 1.20158f);

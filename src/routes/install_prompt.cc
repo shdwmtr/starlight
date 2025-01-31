@@ -15,7 +15,7 @@ using namespace ImGui;
 
 static std::string steamPath = "C:\\Program Files (x86)\\Steam";
 
-const void RenderInstallPrompt(float xPos)
+const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 {
     ImGuiIO& io = GetIO();
     ImGuiViewport* viewport = GetMainViewport();
@@ -83,7 +83,7 @@ const void RenderInstallPrompt(float xPos)
         PopFont();
 
         static bool isOpenFolderHovered = false;
-        float currentColor = TransitionFlatColor("##OpenFolderButton", 0.f, 1.f, isOpenFolderHovered, 0.3f);
+        float currentColor = EaseInOutFloat("##OpenFolderButton", 0.f, 1.f, isOpenFolderHovered, 0.3f);
 
         /** Check if the animation has started */
         if (currentColor != 0.f)
@@ -155,7 +155,7 @@ const void RenderInstallPrompt(float xPos)
         SetCursorPosY(GetCursorPosY() - ScaleY(25));
 
         static bool isButtonHovered = false;
-        float currentColor = TransitionFlatColor("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
+        float currentColor = EaseInOutFloat("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
 
         PushStyleColor(ImGuiCol_Button,        ImVec4(currentColor, currentColor, currentColor, 1.0f));
         PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(currentColor, currentColor, currentColor, 1.0f));

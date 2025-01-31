@@ -2,8 +2,8 @@
 #include <wndproc.h>
 #include <GLFW/glfw3native.h>
 
-WNDPROC original_proc;
-bool isTitleBarHovered = false;
+WNDPROC g_OriginalWindProcCallback;
+bool    isTitleBarHovered = false;
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -44,7 +44,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
     }
     
-    return CallWindowProc(original_proc, hWnd, uMsg, wParam, lParam);
+    return CallWindowProc(g_OriginalWindProcCallback, hWnd, uMsg, wParam, lParam);
 }
 
 void SetBorderlessWindowStyle(GLFWwindow* window)
@@ -58,10 +58,10 @@ void SetBorderlessWindowStyle(GLFWwindow* window)
 
     RECT windowRect;
     GetWindowRect(hWnd, &windowRect);
-    int width = windowRect.right - windowRect.left;
+    int width  = windowRect.right - windowRect.left;
     int height = windowRect.bottom - windowRect.top;
 
-    original_proc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
+    g_OriginalWindProcCallback = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
     SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WindowProc));
     SetWindowPos(hWnd, NULL, 0, 0, width, height, SWP_FRAMECHANGED | SWP_NOMOVE);
 }

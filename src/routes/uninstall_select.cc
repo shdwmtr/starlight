@@ -15,7 +15,7 @@ using namespace ImGui;
 
 static std::string steamPath = "C:\\Program Files (x86)\\Steam";
 
-const void RenderUninstallSelect(float xPos)
+const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
 {
     ImGuiIO& io = GetIO();
     ImGuiViewport* viewport = GetMainViewport();
@@ -113,7 +113,7 @@ const void RenderUninstallSelect(float xPos)
         SetCursorPosY(GetCursorPosY() - ScaleY(25));
 
         static bool isButtonHovered = false;
-        float currentColor = TransitionFlatColor("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
+        float currentColor = EaseInOutFloat("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
 
         PushStyleColor(ImGuiCol_Button,        ImVec4(currentColor, currentColor, currentColor, 1.0f));
         PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(currentColor, currentColor, currentColor, 1.0f));

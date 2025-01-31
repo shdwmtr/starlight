@@ -1,6 +1,9 @@
 #include <imgui.h>
 #include <texture.h>
 #include <dpi.h>
+#include <components.h>
+#include <animate.h>
+#include <iostream>
 
 using namespace ImGui;
 
@@ -8,7 +11,7 @@ using namespace ImGui;
  * Render the title bar component.
  * @return Whether the title bar component is hovered.
  */
-bool RenderTitleBarComponent()
+bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
 {
     static const char* strTitleText = "Steam Homebrew";
 
@@ -23,15 +26,34 @@ bool RenderTitleBarComponent()
         float titlePadding = ScaleX(20);
 
         SetCursorPos(ImVec2(titlePadding, titlePadding));
+
+        float backButtonPos = EaseInOutFloat("##TitleBarBackButton", 0.f, ScaleX(40), !router->canGoBack(), 0.3f);
+
+        SetCursorPosX(GetCursorPosX() - backButtonPos);
+
+        Image((ImTextureID)(intptr_t)backBtnTexture, ImVec2(iconDimension, iconDimension));
+
+        if (IsItemClicked(ImGuiMouseButton_Left))
+        {
+            router->navigateBack();
+        }
+
+        if (IsItemHovered())
+        {
+            SetMouseCursor(ImGuiMouseCursor_Hand);
+        }
+
+        SameLine(0, titlePadding);
+
         Image((ImTextureID)(intptr_t)logoTexture, ImVec2(iconDimension, iconDimension));
 
         SameLine(0, titlePadding);
         SetCursorPosY(GetCursorPosY() - 2);
         Text(strTitleText);
-        SameLine(0, 0);
+        // SameLine(0, titlePadding);
 
-        // Get frame rate
-        Text("FPS: %.1f", GetIO().Framerate);
+        // // Get frame rate
+        // Text("FPS: %.1f", GetIO().Framerate);
 
 
         SameLine(0, 0);

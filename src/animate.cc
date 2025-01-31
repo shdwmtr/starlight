@@ -13,32 +13,30 @@ float EaseInOut(float t)
     return t < 0.5f ? 2 * t * t : -1 + (4 - 2 * t) * t;
 }
 
-float TransitionFlatColor(const std::string& id, float lowerBound, float upperBound, bool currentState, float duration)
+float EaseInOutFloat(const std::string& id, float lowerBound, float upperBound, bool currentState, float duration)
 {
-    struct AnimationState {
-        bool wasHovered = false;
-        bool isAnimating = false;
-        bool isReversing = false;
-        float elapsedTime = 0.0f;
-        float currentValue = 0.0f;  // Default to 0
-        float minValue = 0.0f;
-        float maxValue = 1.0f;
+    struct AnimationState 
+    {
+        bool wasHovered    = false;
+        bool isAnimating   = false;
+        bool isReversing   = false; 
 
-        // Default constructor (needed for unordered_map)
+        float elapsedTime  = 0.0f;
+        float currentValue = 0.0f; 
+        float minValue     = 0.0f;
+        float maxValue     = 1.0f;
+
         AnimationState() = default;
 
-        // Constructor with values
-        AnimationState(float lower, float upper)
-            : wasHovered(false), isAnimating(false), isReversing(false),
-            elapsedTime(0.0f), currentValue(lower), minValue(lower), maxValue(upper) {}
+        AnimationState(float lower, float upper) : wasHovered(false), isAnimating(false), isReversing(false), elapsedTime(0.0f), currentValue(lower), minValue(lower), maxValue(upper) {}
     };
 
 
     static std::unordered_map<std::string, AnimationState> animations;
 
-    // Ensure the animation state exists with correct bounds
     auto it = animations.find(id);
-    if (it == animations.end()) {
+    if (it == animations.end()) 
+    {
         animations[id] = AnimationState(lowerBound, upperBound);
     }
 
@@ -46,7 +44,6 @@ float TransitionFlatColor(const std::string& id, float lowerBound, float upperBo
 
     float deltaTime = ImGui::GetIO().DeltaTime;
 
-    // Detect state change
     if (currentState != state.wasHovered)
     {
         state.wasHovered = currentState;
@@ -68,7 +65,6 @@ float TransitionFlatColor(const std::string& id, float lowerBound, float upperBo
 
         float easedProgress = EaseInOut(progress);
 
-        // Instead of using function parameters, use stored min/max values
         float startValue = state.currentValue;
         float targetValue = state.isReversing ? state.minValue : state.maxValue;
 
@@ -129,47 +125,6 @@ float SmoothFloat(const std::string& id, float targetOffset, bool currentState, 
     ImGui::SetCursorPosY(state.currentPosY);
 
     return result;
-}
-
-float AnimateRouteTransition(std::shared_ptr<Router> routerPtr)
-{
-    static float ANIMATION_DURATION = 0.2f;
-
-    static float startY   = 0;
-    static float targetY  = 0;  
-    static float currentY = startY; 
-
-    static bool animate   = false;
-    static auto startTime = std::chrono::steady_clock::now();
-
-    static float lastTargetY = targetY;
-
-    if (targetY != lastTargetY) 
-    {
-        startY = currentY; 
-        lastTargetY = targetY;
-        startTime = std::chrono::steady_clock::now();
-        animate = true;
-    }
-
-    if (animate) 
-    {
-        auto now = std::chrono::steady_clock::now();
-        float elapsedTime = std::chrono::duration<float>(now - startTime).count();
-
-        if (elapsedTime < ANIMATION_DURATION) 
-        {
-            currentY = EaseInOutTime(elapsedTime, startY, targetY - startY, ANIMATION_DURATION);
-        } 
-        else 
-        {
-            currentY = targetY;
-            animate = false;
-        }
-    }
-
-    // targetY = routerPtr->getRoutePosition();
-    return currentY;
 }
 
 float EaseInOutTime(float t, float b, float c, float d) 

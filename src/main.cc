@@ -33,122 +33,8 @@ static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
-// Define the Component type
-typedef std::function<void(float xOffset)> Component;
 
-// Ease In-Out Cubic Function (Smooth Start & End)
-float easeInOut(float t) {
-    return t < 0.5f ? 4.0f * t * t * t : 1.0f - pow(-2.0f * t + 2.0f, 3) / 2.0f;
-}
 
-// Sample panels (xOffset is used for animation positioning)
-void RenderHomeEx(float xOffset) {
-    ImGui::SetCursorPos(ImVec2(xOffset, 50));
-    ImGui::Text("Rendering Home Panel");
-}
-
-void RenderInstallPromptEx(float xOffset) {
-    ImGui::SetCursorPos(ImVec2(xOffset, 50));
-    ImGui::Text("Rendering Install Prompt Panel");
-}
-
-void RenderInstallerEx(float xOffset) {
-    ImGui::SetCursorPos(ImVec2(xOffset, 50));
-    ImGui::Text("Rendering Installer Panel");
-}
-
-// Router class with smooth animation
-class RouterNav {
-public:
-    RouterNav(const std::vector<Component>& components)
-        : components(components), currentIndex(0), isAnimating(false), animTime(0.0f) {}
-
-    void navigateNext() 
-    {
-        if (currentIndex + 1 < components.size() && !isAnimating) 
-        {
-            startAnimation(1);
-        }
-    }
-
-    void navigateBack() 
-    {
-        if (currentIndex > 0 && !isAnimating) 
-        {
-            startAnimation(-1);
-        }
-    }
-
-    Component getCurrentComponent() const 
-    {
-        return components[currentIndex];
-    }
-
-    Component getTransitioningComponent() const 
-    {
-        return isAnimating ? components[targetIndex] : nullptr;
-    }
-
-    void update() 
-    {
-        float deltaTime = ImGui::GetIO().DeltaTime; // Use ImGui delta time
-        if (isAnimating) 
-        {
-            animTime += deltaTime / animationDuration;
-            if (animTime >= 1.0f) 
-            {
-                animTime = 1.0f;
-                isAnimating = false;
-                currentIndex = targetIndex;
-            }
-        }
-    }
-
-    float getCurrentOffset(float viewportWidth) const 
-    {
-        return isAnimating ? lerp(0.0f, -viewportWidth * animDirection, easeInOut(animTime)) : 0.0f;
-    }
-
-    float getTransitioningOffset(float viewportWidth) const 
-    {
-        return isAnimating ? lerp(viewportWidth * animDirection, 0.0f, easeInOut(animTime)) : 0.0f;
-    }
-
-private:
-    std::vector<Component> components;
-    size_t currentIndex;
-    size_t targetIndex;
-    bool isAnimating;
-    float animTime;
-    int animDirection;
-    const float animationDuration = 0.3f; // Animation time in seconds
-
-    // Linear interpolation function
-    float lerp(float a, float b, float t) const 
-    {
-        return a + (b - a) * t;
-    }
-
-    void startAnimation(int direction)
-    {
-        isAnimating = true;
-        animTime = 0.0f;
-        animDirection = direction;
-        targetIndex = currentIndex + direction;
-    }
-};
-
-// Define components
-static std::vector<Component> InstallComponents = {
-    RenderHome,
-    RenderInstallPrompt,
-    RenderInstaller
-};
-
-static std::vector<Component> UninstallComponents = {
-    RenderHome,
-    RenderUninstallSelect
-};
 
 void RenderImGui(GLFWwindow* window)
 {
@@ -156,60 +42,39 @@ void RenderImGui(GLFWwindow* window)
     ImGui_ImplGlfw_NewFrame();
     NewFrame();
 
-    static std::shared_ptr<RouterNav> router = std::make_shared<RouterNav>(UninstallComponents);
+    static std::shared_ptr<RouterNav> router = std::make_shared<RouterNav>(std::vector<Component>{ RenderHome });
 
     ImGuiViewport* viewport = GetMainViewport();
     {
-        SetNextWindowPos(viewport->Pos);
+        SetNextWindowPos (viewport->Pos);
         SetNextWindowSize(viewport->Size);
 
         PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         Begin("Millennium", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar); 
         PopStyleVar();
 
-        isTitleBarHovered = RenderTitleBarComponent();
+        isTitleBarHovered = RenderTitleBarComponent(router);
 
-        AnimateRouteTransition(nullptr);
+        // ImGui::SetCursorPosY(100);
+        router->update(); 
 
-        // PushID("HomePanel");
-        // RenderHome(routerPtr, &currentPos);
-        // PopID();
-
-        // SameLine();
-
-        // float secondPanel = viewport->Size.x + currentPos;
-
-        // PushID("InstallPrompt");
-        // RenderInstallPrompt(routerPtr, &secondPanel);
-        // PopID();
-
-        ImGui::SetCursorPosY(100);
-
-        router->update(); // Update animation progress using ImGui delta time
-
-        Component currentPanel = router->getCurrentComponent();
+        Component currentPanel       = router->getCurrentComponent();
         Component transitioningPanel = router->getTransitioningComponent();
 
-        float xOffsetCurrent = router->getCurrentOffset(viewport->Size.x);
+        float xOffsetCurrent       = router->getCurrentOffset(viewport->Size.x);
         float xOffsetTransitioning = router->getTransitioningOffset(viewport->Size.x);
 
-        if (transitioningPanel) {
+        if (transitioningPanel) 
+        {
             PushID("TransitioningPanel");
-            transitioningPanel(xOffsetTransitioning);
+            transitioningPanel(router, xOffsetTransitioning);
             PopID();
         }
 
         ImGui::SameLine();
         PushID("CurrentPanel");
-        currentPanel(xOffsetCurrent);
+        currentPanel(router, xOffsetCurrent);
         PopID();
-
-        // if (ImGui::Button("Next Panel")) {
-        //     router->navigateNext();
-        // }
-        // if (ImGui::Button("Previous Panel")) {
-        //     router->navigateBack();
-        // }
 
         if (ImGui::IsKeyPressed(ImGuiKey_MouseX1))
         {
@@ -220,26 +85,6 @@ void RenderImGui(GLFWwindow* window)
         {
             router->navigateNext();
         }
-
-
-        // ImSpinner::demoSpinners();
-
-        // ImGui::SetCursorPos(ImVec2((viewport->Size.x / 2) - 14, (viewport->Size.y / 2) - 50));
-
-        // ImSpinner::Spinner<ImSpinner::SpinnerTypeT::e_st_ang>       (
-        //     "SpinnerAngNoBg",                          
-        //     ImSpinner::Radius{14},           
-        //     ImSpinner::Thickness{3}, 
-        //     ImSpinner::Color{ImColor(255, 255, 255, 255)}, 
-        //     ImSpinner::BgColor{ImColor(255, 255, 255, 0)}, 
-        //     ImSpinner::Speed{6}, 
-        //     ImSpinner::Angle{IM_PI}, 
-        //     ImSpinner::Mode{0}
-        // );
-        // ImGui::SetCursorPos(ImVec2((viewport->Size.x) / 2 - (CalcTextSize("One Moment").x / 2), viewport->Size.y / 2 + 15));
-
-        // Text("One Moment");
-
         End();
     }
     Render();

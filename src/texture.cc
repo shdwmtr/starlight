@@ -12,6 +12,7 @@ GLuint infoIconTexture;
 GLuint closeButtonTexture;
 GLuint discordIconTexture;
 GLuint gtihubIconTexture;
+GLuint backBtnTexture;
 
 bool LoadTextureFromMemory(const void* data, size_t data_size, GLuint* out_texture, int* out_width, int* out_height)
 {
@@ -50,4 +51,5 @@ void LoadTextures()
     LoadTextureFromMemory(closeBtn, sizeof(closeBtn), &closeButtonTexture);
     LoadTextureFromMemory(discordIcon, sizeof(discordIcon), &discordIconTexture);
     LoadTextureFromMemory(githubIcon, sizeof(githubIcon), &gtihubIconTexture);
+    LoadTextureFromMemory(backBtn, sizeof(backBtn), &backBtnTexture);
 }

@@ -1,29 +1,48 @@
 #pragma once
+#include <functional>
+#include <vector>
+#include <memory>
 
-enum Route {
-    HOME,
-    INSTALLER_PROMPT,
-    INSTALLER,
-    UNINSTALLER_SELECT_REASONS,
-    UNINSTALLER_PROMPT,
-    UNINSTALLER,
+class RouterNav;
+using Component = std::function<void(std::shared_ptr<RouterNav> router, float xOffset)>;
+
+enum AnimationDirection 
+{
+    FORWARD = 1,
+    BACKWARD = -1
 };
 
-class Router {
+class RouterNav 
+{
 public:
-    Router();
-    void route(Route route);
-    void goBack();
-    void goForward();
-    void goHome();
-    void goInstallerPrompt();
-    void goInstaller();
-    void goUninstallerSelectReasons();
-    void goUninstallerPrompt();
-    void goUninstaller();
-    Route getCurrentRoute();
-    float getRoutePosition();
+    RouterNav(const std::vector<Component>& components) : components(components), currentIndex(0), isAnimating(false), animTime(0.0f) {}
+
+    void navigateNext();
+    void navigateBack();
+
+    bool canGoBack()    const { return currentIndex > 0;                     }
+    bool canGoForward() const { return currentIndex + 1 < components.size(); }
+
+    Component getCurrentComponent() const;
+    Component getTransitioningComponent() const;
+
+    void update();
+
+    float getCurrentOffset(float viewportWidth) const;
+    float getTransitioningOffset(float viewportWidth) const;
+
+    void setComponents(const std::vector<Component>& components) { this->components = components; }
 private:
-    Route currentRoute;
-    Route previousRoute;
+    std::vector<Component> components;
+
+    size_t currentIndex;
+    size_t targetIndex;
+
+    bool isAnimating;
+    float animTime;
+    int animDirection;
+    const float animationDuration = 0.3f;
+
+    float lerp(float a, float b, float t) const;
+    void startAnimation(int direction);
 };

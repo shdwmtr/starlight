@@ -14,7 +14,7 @@ using namespace ImSpinner;
 
 static std::string statusText = "Installing Millennium v2.17.2";
 
-const void RenderInstaller(float xPos)
+const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
 {
     ImGuiViewport* viewport = GetMainViewport();
     static const float BottomNavBarHeight = ScaleY(115);
@@ -86,7 +86,7 @@ const void RenderInstaller(float xPos)
         SetCursorPosY(GetCursorPosY() - ScaleY(25));
 
         static bool isButtonHovered = false;
-        float currentColor = TransitionFlatColor("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
+        float currentColor = EaseInOutFloat("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
 
         PushStyleColor(ImGuiCol_Button,        ImVec4(currentColor, currentColor, currentColor, 1.0f));
         PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(currentColor, currentColor, currentColor, 1.0f));

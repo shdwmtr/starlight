@@ -35,7 +35,7 @@ const void RenderCheckBox(bool checked, const char* description, const char* too
 
     if (tooltipText)
     {
-        float autoUpdateColor = TransitionFlatColor(description, 0.f, 1.f, state.isHovered, 0.3f);
+        float autoUpdateColor = EaseInOutFloat(description, 0.f, 1.f, state.isHovered, 0.3f);
 
         if (autoUpdateColor)
         {
