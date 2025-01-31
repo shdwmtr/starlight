@@ -1,0 +1,8 @@
+{
+    "dependencies": [
+        "glfw3",
+        "stb",
+        "glew",
+        "freetype"
+    ]
+}
