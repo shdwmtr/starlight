@@ -9,6 +9,8 @@
 #include <dpi.h>
 #include <unordered_map>
 #include <components.h>
+#include <thread>
+#include <atomic>
 
 using namespace ImGui;
 
@@ -59,7 +61,7 @@ const void RenderOption(OptionProps props, int ContainerWidth, int ContainerHeig
         PushStyleColor(ImGuiCol_Border, ImVec4(currentClickedColor, currentClickedColor, currentClickedColor, 1.f));
     }
 
-    BeginChild(("##" + props.title + "Container").c_str(), ImVec2(ContainerWidth, ContainerHeight * YDPI), true);
+    BeginChild(("##" + props.title + "Container").c_str(), ImVec2(ContainerWidth, ContainerHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
         PushFont(io.Fonts->Fonts[1]);
         Text("%s", props.title.c_str());
@@ -160,7 +162,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
     ImGuiViewport* viewport = GetMainViewport();
 
     const int BottomNavBarHeight = ScaleY(115);
-    const int ContainerHeight = 120; // ImGui Scaling manages DPI here.  
+    const int ContainerHeight = ScaleY(150); // ImGui Scaling manages DPI here.  
     const int ContainerSpacing = ScaleX(30);
     const int ContainerWidth = (viewport->Size.x - ScaleX(100)) / 2;
 
@@ -223,14 +225,19 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
 
         SetCursorPosY(buttonPos);
 
-        if (currentOption == UNSET)
+        static std::atomic<bool> isLoading { false };
+        bool hasLoadedPushed = false;
+
+        if (currentOption == UNSET || isLoading.load(std::memory_order_relaxed))
         {
             PushStyleColor(ImGuiCol_Button,        ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
             PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
             PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+
+            hasLoadedPushed = true;
         }
 
-        if (Button("Next", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
+        if (Button(isLoading.load(std::memory_order_relaxed) ? "One Moment..." : "Next", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
         {
             switch (currentOption)
             {
@@ -242,8 +249,14 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
                 }
                 case REMOVE:
                 {
+                    isLoading.store(true, std::memory_order_relaxed);
                     router->setComponents(UninstallComponents);
-                    router->navigateNext();
+
+                    std::thread([router]() {
+                        StartUninstaller();
+                        router->navigateNext();
+                        isLoading.store(false, std::memory_order_relaxed);
+                    }).detach();
                     break;
                 }
                 default:
@@ -253,7 +266,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
             }
         }
     
-        if (currentOption == UNSET)
+        if (currentOption == UNSET || hasLoadedPushed)
         {
             PopStyleColor(3);
         }
@@ -262,7 +275,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
 
         if (buttonHovered)
         {
-            if (currentOption == UNSET)
+            if (currentOption == UNSET || isLoading.load(std::memory_order_relaxed))
             {
                 SetMouseCursor(ImGuiMouseCursor_NotAllowed);
             }

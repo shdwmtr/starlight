@@ -2,6 +2,7 @@
 #include <string>
 #include <router.h>
 #include <memory>
+#include <dpi.h>
 
 // Easing function: ease-in-out quadratic
 float EaseInOut(float t);
@@ -9,11 +10,13 @@ float EaseInOutTime(float t, float b, float c, float d) ;
 
 struct AnimationState
 {
-    float currentPosY; // Current position
-    float startPosY;   // Start position
-    float elapsedTime; // Elapsed time
-    bool isAnimating;  // Whether animation is active
-    bool wasHovered;   // Last hover state
+    float currentPosY;
+    float startPosY;
+    float elapsedTime; 
+    bool  isAnimating;
+    bool  wasHovered;
+
+    float lastXDPI = XDPI, lastYDPI = YDPI;
 };
 
 float SmoothFloat(

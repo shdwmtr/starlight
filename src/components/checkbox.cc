@@ -9,22 +9,12 @@
 
 using namespace ImGui;
 
-const void RenderCheckBox(bool checked, const char* description, const char* tooltipText)
+const CheckBoxState* RenderCheckBox(bool checked, const char* description, const char* tooltipText)
 {
-    struct CheckBoxState
-    {
-        bool isHovered;
-        bool isChecked;
-
-        CheckBoxState(bool isChecked) : isHovered(false), isChecked(false) {
-            this->isChecked = isChecked;
-        }
-    };
-
     static std::unordered_map<std::string, CheckBoxState> checkBoxStates;
     auto& state = checkBoxStates.try_emplace(description, checked).first->second;
 
-    PushStyleVar  (ImGuiStyleVar_FrameRounding,   10.0f                               );
+    PushStyleVar  (ImGuiStyleVar_FrameRounding,   6.0f                               );
     PushStyleVar  (ImGuiStyleVar_FrameBorderSize, 2.0f                               );
     PushStyleColor(ImGuiCol_Border,               ImVec4(0.18f, 0.184f, 0.192f, 1.0f));
     PushStyleColor(ImGuiCol_CheckMark,            ImVec4(1.0f, 1.0f, 1.0f, 1.0f)     );
@@ -57,4 +47,6 @@ const void RenderCheckBox(bool checked, const char* description, const char* too
 
     PopStyleColor(3);
     PopStyleVar(2);
+
+    return &state;
 }

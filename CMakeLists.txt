@@ -15,6 +15,7 @@ set(SOURCES
     src/main.cc
     src/texture.cc
     src/wndproc.cc
+    src/renderer.cc
     src/routes/home.cc
     src/routes/install_prompt.cc
     src/routes/installer.cc

@@ -9,11 +9,96 @@
 #include <iostream>
 #include <dpi.h>
 #include <unordered_map>
-#include <components.h>
+#include <components.h> 
+#include <windows.h>
+#include <shobjidl.h>
+#include <commdlg.h>
+#include <filesystem>
 
 using namespace ImGui;
 
 static std::string steamPath = "C:\\Program Files (x86)\\Steam";
+
+std::string OpenFolderDialog()
+{
+    const auto WStringToString = [](const std::wstring& wstr) -> std::string {
+        if (wstr.empty()) return {};
+
+        size_t size_needed = std::wcstombs(nullptr, wstr.c_str(), 0) + 1;
+        std::string str(size_needed, 0);
+        std::wcstombs(&str[0], wstr.c_str(), size_needed);
+        str.pop_back(); 
+        return str;
+    };
+
+    if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
+    {
+        return {};
+    }
+
+    IFileOpenDialog* pFileOpen = nullptr;
+    if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen))))
+    {
+        CoUninitialize();
+        return {};
+    }
+
+    unsigned long options;
+    if (SUCCEEDED(pFileOpen->GetOptions(&options)))
+    {
+        pFileOpen->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+    }
+
+    if (FAILED(pFileOpen->Show(nullptr)))
+    {
+        pFileOpen->Release();
+        CoUninitialize();
+        return {};
+    }
+
+    IShellItem* pItem = nullptr;
+    if (FAILED(pFileOpen->GetResult(&pItem)))
+    {
+        pFileOpen->Release();
+        CoUninitialize();
+        return {};
+    }
+
+    wchar_t* folderPath = nullptr;
+    std::string result;
+    if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &folderPath)))
+    {
+        if (folderPath)
+        {
+            result = WStringToString(folderPath);
+            CoTaskMemFree(folderPath);
+        }
+    }
+
+    pItem->Release();
+    pFileOpen->Release();
+    CoUninitialize();
+
+    return result;
+}
+
+void SelectNewSteamPath()
+{
+    const auto steamPath = std::filesystem::path(OpenFolderDialog());
+
+    if (steamPath.empty())
+    {
+        return;
+    }
+
+    if (!std::filesystem::exists(steamPath / "steam.exe"))
+    {
+        MessageBoxA(nullptr, "Invalid Steam path selected", "Error", MB_ICONERROR);
+        return;
+    }
+
+    ::steamPath = steamPath.string();
+}
 
 const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 {
@@ -78,7 +163,7 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
         if (Button("...", ImVec2(GetContentRegionAvail().x, ScaleY(44))))
         {
-            // Open file dialog
+            SelectNewSteamPath();
         }
         PopFont();
 
@@ -124,6 +209,13 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
             "Automatically install found updates", 
             "With this and the setting above enabled, you will NOT be prompted to\ninstall updates. They will be carried out automatically."
         );
+
+        Spacing();
+        Spacing();
+        Spacing();
+        Spacing();
+
+        Text("Total download size: 1.2 GB");
 
         PopStyleColor();
     }

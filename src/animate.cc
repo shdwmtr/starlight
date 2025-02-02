@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <imgui.h>
 #include <memory>
+#include <dpi.h>
 
 /** Based on https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula */
 float EaseInOut(float t)
@@ -26,11 +27,11 @@ float EaseInOutFloat(const std::string& id, float lowerBound, float upperBound, 
         float minValue     = 0.0f;
         float maxValue     = 1.0f;
 
-        AnimationState() = default;
+        float lastXDPI = XDPI, lastYDPI = YDPI;
 
+        AnimationState() = default;
         AnimationState(float lower, float upper) : wasHovered(false), isAnimating(false), isReversing(false), elapsedTime(0.0f), currentValue(lower), minValue(lower), maxValue(upper) {}
     };
-
 
     static std::unordered_map<std::string, AnimationState> animations;
 
@@ -46,7 +47,7 @@ float EaseInOutFloat(const std::string& id, float lowerBound, float upperBound, 
 
     if (currentState != state.wasHovered)
     {
-        state.wasHovered = currentState;
+        state.wasHovered  = currentState;
         state.isAnimating = true;
         state.isReversing = !currentState;
         state.elapsedTime = 0.0f;
@@ -87,9 +88,20 @@ float EaseInOutFloat(const std::string& id, float lowerBound, float upperBound, 
 float SmoothFloat(const std::string& id, float targetOffset, bool currentState, float displacement, float duration, std::tuple<float, float> colorTransition)
 {
     static std::unordered_map<std::string, AnimationState> animations;
-    const auto [lowerBound, upperBound] = colorTransition;
 
+    const auto [lowerBound, upperBound] = colorTransition;
     AnimationState& state = animations[id];
+
+    float currentXDPI = XDPI;
+    float currentYDPI = YDPI;
+
+    if (currentXDPI != state.lastXDPI || currentYDPI != state.lastYDPI)
+    {
+        state.currentPosY = ImGui::GetCursorPosY();
+        state.lastXDPI = currentXDPI;
+        state.lastYDPI = currentYDPI;
+    }
+
     if (state.currentPosY == 0.0f)
         state.currentPosY = ImGui::GetCursorPosY();
 
@@ -102,8 +114,8 @@ float SmoothFloat(const std::string& id, float targetOffset, bool currentState, 
         state.elapsedTime = 0.0f;
         state.startPosY = state.currentPosY;
     }
-    float targetPosY = currentState ? targetOffset - displacement : targetOffset;
 
+    float targetPosY = currentState ? targetOffset - displacement : targetOffset;
     float result = upperBound;
 
     if (state.isAnimating)
@@ -118,12 +130,11 @@ float SmoothFloat(const std::string& id, float targetOffset, bool currentState, 
         }
 
         float easedProgress = EaseInOut(progress);
-
-        result = lowerBound + (upperBound - lowerBound) *  easedProgress;
+        result = lowerBound + (upperBound - lowerBound) * easedProgress;
         state.currentPosY = state.startPosY + (easedProgress * (targetPosY - state.startPosY));
     }
-    ImGui::SetCursorPosY(state.currentPosY);
 
+    ImGui::SetCursorPosY(state.currentPosY);
     return result;
 }
 

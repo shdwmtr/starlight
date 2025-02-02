@@ -1,5 +1,6 @@
 #include <dpi.h>
 #include <iostream>
+#include <math.h>
 
 float XDPI = 1.0f;
 float YDPI = 1.0f;
@@ -21,10 +22,10 @@ void SetupDPI(GLFWwindow* window)
  */
 float ScaleX(float x)
 {
-    return (x / 1.5) * XDPI;
+    return ((x / 1.5) * XDPI);
 }
 
 float ScaleY(float y)
 {
-    return (y / 1.5) * YDPI;
+    return ((y / 1.5) * YDPI);
 }

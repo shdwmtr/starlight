@@ -1,9 +1,14 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <wndproc.h>
 #include <GLFW/glfw3native.h>
+#include <iostream>
+#include <renderer.h>
+#include <dpi.h>
 
 WNDPROC g_OriginalWindProcCallback;
 bool    isTitleBarHovered = false;
+GLFWwindow* window;
+std::shared_ptr<RouterNav> g_routerPtr;
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -21,40 +26,40 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             return 0;
         }
-        case WM_NCPAINT:
-        {
-            return 1;
-        }
-        case WM_DESTROY: 
-        {
-            PostQuitMessage(0);
-            break;
-        }
         case WM_NCHITTEST:
         {
-            if (isTitleBarHovered) 
-            {
-                return HTCAPTION;
-            }
-            return HTCLIENT;
+            POINT cursorPos;
+            GetCursorPos(&cursorPos);
+            ScreenToClient(hWnd, &cursorPos);
+
+            RECT clientRect;
+            GetClientRect(hWnd, &clientRect);
+
+            const int titleBarHeight   = ScaleY(100);
+            const int closeButtonWidth = ScaleX(70);
+            const int backButtonWidth  = ScaleX(70);
+
+            bool inTitleBar        = (cursorPos.y >= 0 && cursorPos.y <= titleBarHeight);
+            bool inCloseButtonArea = (cursorPos.x >= (clientRect.right - closeButtonWidth) && cursorPos.x <= clientRect.right);
+            bool inBackButtonArea  = (g_routerPtr->canGoBack() && cursorPos.x >= 0 && cursorPos.x <= backButtonWidth);
+
+            return inTitleBar && !inCloseButtonArea && !inBackButtonArea ? HTCAPTION : HTCLIENT;
         }
         case WM_NCACTIVATE:
         {
-            return false;
+            return true;
         }
     }
     
     return CallWindowProc(g_OriginalWindProcCallback, hWnd, uMsg, wParam, lParam);
 }
 
-void SetBorderlessWindowStyle(GLFWwindow* window)
+void SetBorderlessWindowStyle(GLFWwindow* window, std::shared_ptr<RouterNav> router)
 {
-    HWND hWnd = glfwGetWin32Window(window);
+    ::window = window;
+    ::g_routerPtr = router;
 
-    LONG_PTR lStyle = GetWindowLongPtr(hWnd, GWL_STYLE);
-    lStyle |= WS_THICKFRAME;
-    lStyle &= ~WS_CAPTION;
-    SetWindowLongPtr(hWnd, GWL_STYLE, lStyle);
+    HWND hWnd = glfwGetWin32Window(window);
 
     RECT windowRect;
     GetWindowRect(hWnd, &windowRect);
