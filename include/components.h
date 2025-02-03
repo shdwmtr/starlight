@@ -8,6 +8,7 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos);
 const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos);
 
 void StartUninstaller();
+const void FetchVersionInfo();
 
 struct CheckBoxState
 {

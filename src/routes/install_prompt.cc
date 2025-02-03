@@ -14,6 +14,10 @@
 #include <shobjidl.h>
 #include <commdlg.h>
 #include <filesystem>
+#include <nlohmann/json.hpp>
+#include <http.h>
+#include <fmt/format.h>
+#include <util.h>
 
 using namespace ImGui;
 
@@ -100,6 +104,82 @@ void SelectNewSteamPath()
     ::steamPath = steamPath.string();
 }
 
+nlohmann::json releaseInfo, osReleaseInfo;
+
+std::string ToTimeAgo(const std::string& isoTimestamp) 
+{
+    std::tm tm = {};
+    std::istringstream ss(isoTimestamp);
+    ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ"); // UTC time format
+
+    if (ss.fail()) 
+    {
+        return "Invalid timestamp";
+    }
+
+    // Convert to time_point
+    std::time_t inputTime = std::mktime(&tm);
+    auto inputTimePoint = std::chrono::system_clock::from_time_t(inputTime);
+    auto now = std::chrono::system_clock::now();
+
+    // Calculate difference in seconds
+    auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - inputTimePoint).count();
+
+    // Helper lambda to handle singular/plural formatting
+    auto formatTime = [](long count, const char* unit) 
+    {
+        return fmt::format("{} {}{}", count, unit, (count == 1 ? "" : "s"));
+    };
+
+    if (diff < 60)       return "just now";
+    if (diff < 3600)     return formatTime(diff / 60, "minute") + " ago";
+    if (diff < 86400)    return formatTime(diff / 3600, "hour") + " ago";
+    if (diff < 2592000)  return formatTime(diff / 86400, "day") + " ago";
+    if (diff < 31536000) return fmt::format("about {} ago", formatTime(diff / 2592000, "month"));
+    return fmt::format("about {} ago", formatTime(diff / 31536000, "year"));
+}
+
+const void FetchVersionInfo()
+{
+    const auto response = Http::Get("https://api.github.com/repos/shdwmtr/millennium/releases", false);
+
+    if (response.empty())
+    {
+        MessageBoxA(nullptr, "Failed to fetch version info", "Error", MB_ICONERROR);
+        return;
+    }
+
+    releaseInfo = nlohmann::json::parse(response);
+
+    // Filter and find first release that isn't a pre-release
+    for (const auto& release : releaseInfo)
+    {
+        if (!release["prerelease"].get<bool>())
+        {
+            releaseInfo = release;
+
+            // Fetch OS release info
+            for (const auto& asset : releaseInfo["assets"])
+            {
+                std::string assetName  = asset["name"];
+                std::string releaseTag = releaseInfo["tag_name"];
+
+                #ifdef WIN32
+                if (assetName == fmt::format("millennium-{}-windows-x86_64.zip", releaseTag))
+                #elif __linux__
+                if (assetName == fmt::format("millennium-{}-linux-x86_64.tar.gz", release["tag_name"].get<std::string>()))
+                #endif
+                {
+                    osReleaseInfo = asset;
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+}
+
 const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 {
     ImGuiIO& io = GetIO();
@@ -129,12 +209,12 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
     BeginChild("##PromptContainer", ImVec2(PromptContainerWidth, PromptContainerHeight), false);
     {
         PushFont(io.Fonts->Fonts[1]);
-        Text(u8"Install Millennium v2.17.2 ✨");
+        Text(fmt::format(u8"Install Millennium {} ✨", releaseInfo["tag_name"].get<std::string>()).c_str());
         PopFont();
 
         Spacing();
         PushStyleColor(ImGuiCol_Text, ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
-        TextWrapped("Released: about 1 month ago");
+        TextWrapped(fmt::format("Released {}", ToTimeAgo(releaseInfo["published_at"].get<std::string>())).c_str());
 
         Spacing();
         Separator();
@@ -215,7 +295,9 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
         Spacing();
         Spacing();
 
-        Text("Total download size: 1.2 GB");
+        Text("Download Information:");
+        BulletText("Size: %s", BytesToReadableFormat(osReleaseInfo["size"].get<int>()).c_str());
+        BulletText("Name: %s", osReleaseInfo["name"].get<std::string>().c_str());
 
         PopStyleColor();
     }
@@ -229,7 +311,7 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
     PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f);
     PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
 
-    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight - 3), true, ImGuiWindowFlags_NoScrollbar);
+    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
         SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
         Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));

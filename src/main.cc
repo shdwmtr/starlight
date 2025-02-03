@@ -1,12 +1,13 @@
+#define GL_SILENCE_DEPRECATION
+#define GLFW_EXPOSE_NATIVE_WIN32
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <misc/freetype/imgui_freetype.h>
 #include <stdio.h>
-#include <GL/glew.h>
-#define GL_SILENCE_DEPRECATION
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <wtypes.h>
 #include <memory.h>
@@ -19,12 +20,14 @@
 #include <algorithm>
 #include <theme.h>
 #include <wndproc.h>
-
 #include <imspinner.h>
 #include <thread>
 #include <components.h>
 #include <dpi.h>
 #include <renderer.h>
+#include <fmt/format.h>
+#include <stb_image.h>
+#include <util.h>
 
 using namespace ImGui;
 
@@ -33,7 +36,7 @@ int WINDOW_HEIGHT = 434;
 
 static void GLFWErrorCallback(int error, const char* description)
 {
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+    MessageBoxA(NULL, fmt::format("An error occurred.\n\nGLFW Error {}: {}", error, description).c_str(), "Whoops!", MB_ICONERROR);
 }
 
 void WindowRefreshCallback(GLFWwindow *window)
@@ -103,6 +106,13 @@ void FrameBufferSizeCallback(GLFWwindow* window, int width, int height)
 void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shared_ptr<RouterNav> router)
 {
     glfwMakeContextCurrent(window); 
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
+    {
+        std::cerr << "Failed to initialize GLAD\n";
+        return;
+    }
+
     SetupColorScheme();
 
     SetupImGuiScaling(window);
@@ -130,6 +140,16 @@ void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shar
             hasShown = true;
         }
     }
+}
+
+void setWindowIconFromMemory(GLFWwindow* window, const unsigned char* imageData, int width, int height) 
+{
+    GLFWimage icon[1];
+    icon[0].pixels = const_cast<unsigned char*>(imageData);
+    icon[0].width = width;
+    icon[0].height = height;
+
+    glfwSetWindowIcon(window, 1, icon);
 }
 
 // int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -165,6 +185,22 @@ int main(int argc, char** argv)
     }
 
     SetupDPI(window);
+
+    // Load image from memory
+    int width, height, channels;
+    ColorScheme colorScheme = GetWindowsColorScheme();
+
+    unsigned char* data = stbi_load_from_memory(
+        colorScheme ==  Light ? windowIconDark : windowIconLight, 
+        colorScheme ==  Light ? sizeof(windowIconDark) : sizeof(windowIconLight), 
+        &width, &height, &channels, 4
+    ); 
+
+    if (data)
+    {
+        setWindowIconFromMemory(window, data, width, height);
+        stbi_image_free(data);
+    }
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     if (!primaryMonitor) 

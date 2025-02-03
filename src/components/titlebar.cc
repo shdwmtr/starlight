@@ -25,22 +25,19 @@ bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
         float titlePadding   = ScaleX(20);
         float backButtonPos  = ScaleX(EaseInOutFloat("##TitleBarBackButton", 0.f, 45, !router->canGoBack(), 0.3f));
 
-        SetCursorPos(ImVec2(ScaleX(5) - backButtonPos, titlePadding));
+        SetCursorPos(ImVec2(ScaleX(5) - backButtonPos, ScaleX(5)));
 
         ImVec2 backButtonDim = ImVec2(ScaleX(45), ScaleY(43));
-        SetCursorPosY(ScaleX(5));
 
         PushStyleVar(ImGuiStyleVar_ChildRounding, ScaleX(6));
-        // PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.098f, 0.102f, 0.11f, 1.0f));
         BeginChild("##BackButtonChild", ImVec2(backButtonDim.x, backButtonDim.y), true, ImGuiWindowFlags_NoScrollbar);
         {
             SetCursorPos(ImVec2(ScaleX(13), ScaleY(11)));
             Image((ImTextureID)(intptr_t)backBtnTexture, ImVec2(iconDimension, iconDimension));
         }
         PopStyleVar();
-        // PopStyleColor();    
         EndChild();
-        SameLine(0);
+        SameLine();
 
         SetCursorPosY(ScaleY(16));
 
@@ -59,11 +56,7 @@ bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
         SameLine(0, titlePadding);
         SetCursorPosY(GetCursorPosY() + ScaleY(10));
         Text(strTitleText);
-        SameLine(0, titlePadding);
-        SetCursorPosY(GetCursorPosY() + ScaleY(10));
-
-        Text("FPS: %.1f", GetIO().Framerate);
-        SameLine(0, 0);
+        SameLine();
 
         static bool isCloseButtonHovered = false;
 

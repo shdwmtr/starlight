@@ -2,7 +2,9 @@
     "dependencies": [
         "glfw3",
         "stb",
-        "glew",
-        "freetype"
+        "glad",
+        "freetype",
+        "curl",
+        "fmt"
     ]
 }

@@ -7,7 +7,23 @@ project(Installer VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_CXX_FLAGS "-w -fpermissive -fno-diagnostics-show-option")
+set(BUILD_SHARED_LIBS OFF)
+
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_STATIC ON)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -fpermissive -fno-diagnostics-show-option")
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mwindows -s")
+endif()
+
+add_compile_definitions(
+  CURL_STATICLIB
+  FMT_HEADER_ONLY
+)
 
 # Define source files
 set(IMGUI_DIR "../..")
@@ -39,11 +55,26 @@ set(SOURCES
 # Add the executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+find_program(WINDRES windres)
+if (WINDRES)
+    add_custom_command(
+        OUTPUT ${CMAKE_BINARY_DIR}/version.o
+        COMMAND ${WINDRES} -i ${CMAKE_SOURCE_DIR}/scripts/version.rc -o ${CMAKE_BINARY_DIR}/version.o
+        DEPENDS ${CMAKE_SOURCE_DIR}/scripts/version.rc
+    )
+
+    add_custom_target(resource DEPENDS ${CMAKE_BINARY_DIR}/version.o)
+    add_dependencies(${PROJECT_NAME} resource)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/version.o)
+endif()
+
+
 # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 
 # Include directories
 include_directories(include)
 include_directories(vendor/imgui/include)
+include_directories(vendor/nlohmann/include)
 
 # Platform-specific settings
 if(UNIX AND NOT APPLE)
@@ -75,17 +106,19 @@ elseif(WIN32)
     find_package(Freetype REQUIRED)
     find_package(Stb REQUIRED)
     find_package(glfw3 CONFIG REQUIRED)
-    find_package(glew CONFIG REQUIRED)
+    find_package(glad CONFIG REQUIRED)
+    find_package(CURL REQUIRED)
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${Stb_INCLUDE_DIR})
 
     target_link_libraries(${PROJECT_NAME} PRIVATE
         Freetype::Freetype
         glfw
-        GLEW::GLEW
         gdi32
         opengl32
+        glad::glad
         imm32
+        CURL::libcurl
     )
 endif()
 

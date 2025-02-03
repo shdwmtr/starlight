@@ -13,6 +13,7 @@
 #include <map>
 #include <filesystem>
 #include <imspinner.h>
+#include <util.h>
 
 using namespace ImGui;
 using namespace ImSpinner;
@@ -127,23 +128,6 @@ void StartUninstaller()
         { "Themes",                     std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "steamui" / "skins" }))},
         { "Plugins",                    std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "plugins" }))},
     };
-}
-
-std::string BytesToReadableFormat(float bytes)
-{
-    const char* suffixes[] = { "B", "KB", "MB", "GB", "TB" };
-    int suffixIndex = 0;
-
-    while (bytes >= 1024 && suffixIndex < 4)
-    {
-        bytes /= 1024;
-        suffixIndex++;
-    }
-
-    char buffer[32];
-    sprintf(buffer, "%.2f %s", bytes, suffixes[suffixIndex]);
-
-    return std::string(buffer);
 }
 
 std::string GetReclaimedSpace()
@@ -278,7 +262,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
     PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f);
     PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
 
-    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight - 3), true, ImGuiWindowFlags_NoScrollbar);
+    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
         SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
         Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));

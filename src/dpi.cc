@@ -13,7 +13,6 @@ void SetupDPI(GLFWwindow* window)
     }
 
     glfwGetWindowContentScale(window, &XDPI, &YDPI);
-
     std::cout << "DPI Scale: " << XDPI << ", " << YDPI << std::endl;
 }
 

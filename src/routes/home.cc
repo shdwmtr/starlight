@@ -11,8 +11,10 @@
 #include <components.h>
 #include <thread>
 #include <atomic>
+#include <imspinner.h>
 
 using namespace ImGui;
+using namespace ImSpinner;
 
 enum OptionType
 {
@@ -44,7 +46,7 @@ const void RenderOption(OptionProps props, int ContainerWidth, int ContainerHeig
     const float DEFAULT_BORDER_COL = GetStyleColorVec4(ImGuiCol_Border).x;
 
     auto& state   = optionStates[props.title];
-    state.initPos = GetCursorPosY(); // Current position
+    state.initPos = GetCursorPosY();
 
     static const float hoverColor    = 0.22f;
     static const float selectedColor = 1.0f;
@@ -185,7 +187,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
     PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
     PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f);
 
-    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight - 3), true, ImGuiWindowFlags_NoScrollbar);
+    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
         SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
         Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));
@@ -213,8 +215,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
         const int FooterContainerWidth = ScaleX(300);
         const float buttonPos = GetCursorPosY();
 
-        SetCursorPosX(xPos + GetCursorPosX() + GetContentRegionAvail().x - FooterContainerWidth);
-        SetCursorPosY(GetCursorPosY() + ScaleY(10));
+        SetCursorPos(ImVec2(xPos + GetCursorPosX() + GetContentRegionAvail().x - FooterContainerWidth, GetCursorPosY() + ScaleY(10)));
 
         Image((ImTextureID)(intptr_t)discordIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
         SameLine(0, ScaleX(25));
@@ -237,14 +238,42 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
             hasLoadedPushed = true;
         }
 
-        if (Button(isLoading.load(std::memory_order_relaxed) ? "One Moment..." : "Next", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
+        if (isLoading.load(std::memory_order_relaxed))
+        {
+            PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+            PushStyleVar(ImGuiStyleVar_ChildRounding, ScaleX(10.0f));
+
+            const float childWidth  = GetContentRegionAvail().x;
+            const float childHeight = GetContentRegionAvail().y;
+
+            BeginChild("##ButtonIsBusy", ImVec2(xPos + childWidth, childHeight), true, ImGuiWindowFlags_NoScrollbar);
+            {
+                const float spinnerSize = ScaleX(12.f);
+                SetCursorPos(ImVec2(childWidth / 2 - spinnerSize, spinnerSize));
+
+                Spinner<SpinnerTypeT::e_st_ang>("SpinnerAngNoBg", Radius{spinnerSize}, Thickness{ScaleX(2)}, Color{ImColor(0, 0, 0, 255)}, BgColor{ImColor(255, 255, 255, 0)}, Speed{6}, Angle{IM_PI}, Mode{0});
+            }
+            EndChild();
+            PopStyleColor();
+            PopStyleVar();
+        }
+        else if (Button("Next", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
         {
             switch (currentOption)
             {
                 case INSTALL:
                 {
+                    isLoading.store(true, std::memory_order_relaxed);
                     router->setComponents(InstallComponents);
-                    router->navigateNext();
+
+                    const auto StartInstall = [router]() 
+                    {
+                        FetchVersionInfo();
+                        router->navigateNext();
+                        isLoading.store(false, std::memory_order_relaxed);
+                    };
+
+                    std::thread(StartInstall).detach();
                     break;
                 }
                 case REMOVE:
@@ -252,11 +281,14 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
                     isLoading.store(true, std::memory_order_relaxed);
                     router->setComponents(UninstallComponents);
 
-                    std::thread([router]() {
+                    const auto StartUninstall = [router]() 
+                    {
                         StartUninstaller();
                         router->navigateNext();
                         isLoading.store(false, std::memory_order_relaxed);
-                    }).detach();
+                    };
+
+                    std::thread(StartUninstall).detach();
                     break;
                 }
                 default:
@@ -288,22 +320,24 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
         const char* toolTipText  = "Select an option above to continue.";
         const float tooltipWidth = CalcTextSize(toolTipText).x + ScaleX(20);
 
-        float toolTipOpacity     = EaseInOutFloat("##SelectAnOptionTooltip", 0.f, 1.f, buttonHovered && currentOption == UNSET, 0.4f);
+        float toolTipOpacity = EaseInOutFloat("##SelectAnOptionTooltip", 0.f, 1.f, buttonHovered && currentOption == UNSET, 0.4f);
 
-        /** Check if the animation has started */
         if (toolTipOpacity != 0.f)
         {
             SetNextWindowPos(ImVec2((viewport->Size.x - tooltipWidth) / 2, viewport->Size.y - ScaleY(220)));
 
-            PushStyleColor(ImGuiCol_Border, ImVec4(0.18f, 0.184f, 0.192f, 1.0f));
-            PushStyleColor(ImGuiCol_Text, ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
-            PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(10), ScaleY(10)));
-            PushStyleVar(ImGuiStyleVar_WindowRounding, 6);
-            PushStyleVar(ImGuiStyleVar_Alpha, toolTipOpacity);
-            PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.098f, 0.102f, 0.11f, 1.0f));
+            PushStyleColor( ImGuiCol_Border,  ImVec4(0.18f,  0.184f, 0.192f, 1.0f));
+            PushStyleColor( ImGuiCol_Text,    ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
+            PushStyleColor( ImGuiCol_PopupBg, ImVec4(0.098f, 0.102f, 0.11f,  1.0f));
+
+            PushStyleVar  ( ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(10), ScaleY(10)));
+            PushStyleVar  ( ImGuiStyleVar_WindowRounding, 6);
+            PushStyleVar  ( ImGuiStyleVar_Alpha, toolTipOpacity);
+
             BeginTooltip();
             Text(toolTipText);
             EndTooltip();
+
             PopStyleVar(3);
             PopStyleColor(3);
         }
