@@ -273,7 +273,6 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
         PopStyleVar(3);
 
         PushStyleColor(ImGuiCol_Text, ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
-
         SetCursorPosY(GetCursorPosY() + ScaleY(30));
 
         RenderCheckBox(
@@ -306,10 +305,10 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
     SetCursorPos(ImVec2(xPos, viewport->Size.y - BottomNavBarHeight + 1));
 
-    PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30)));
-    PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
-    PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f);
-    PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
+    PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30))     );
+    PushStyleColor(ImGuiCol_Border,             ImVec4(0.f, 0.f, 0.f, 0.f)         );
+    PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f                               );
+    PushStyleColor(ImGuiCol_ChildBg,            ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
 
     BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
