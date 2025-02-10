@@ -4,6 +4,7 @@
 #include <components.h>
 #include <animate.h>
 #include <iostream>
+#include <math.h>
 
 using namespace ImGui;
 
@@ -65,7 +66,7 @@ bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
             PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.769f, 0.169f, 0.11f, 1.0f));
         }
 
-        ImVec2 closeButtonDimensions = ImVec2(ScaleX(70), ScaleY(43));
+        ImVec2 closeButtonDimensions = ImVec2(ceil(ScaleX(70)), ceil(ScaleY(43)));
         SetCursorPos(ImVec2(viewport->Size.x - closeButtonDimensions.x, 0));
 
         PushStyleVar(ImGuiStyleVar_ChildRounding, 0);

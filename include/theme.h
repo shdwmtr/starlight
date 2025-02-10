@@ -11,6 +11,8 @@ void SetupColorScheme()
     colors[ImGuiCol_WindowBg] = ImVec4(0.067f, 0.071f, 0.078f, 1.00f);
     colors[ImGuiCol_Border] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
+    style.WindowBorderSize = 0.0f;
+
     style.WindowPadding = ImVec2(ScaleX(30), ScaleY(30));
     style.ChildRounding = ScaleX(10.0f);
     style.FrameRounding = ScaleX(10.0f);
