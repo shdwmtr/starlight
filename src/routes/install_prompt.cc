@@ -18,10 +18,9 @@
 #include <http.h>
 #include <fmt/format.h>
 #include <util.h>
+#include "imgui_markdown.h" 
 
 using namespace ImGui;
-
-static std::string steamPath = "C:\\Program Files (x86)\\Steam";
 
 std::string OpenFolderDialog()
 {
@@ -86,7 +85,7 @@ std::string OpenFolderDialog()
     return result;
 }
 
-void SelectNewSteamPath()
+std::string SelectNewSteamPath()
 {
     const auto steamPath = std::filesystem::path(OpenFolderDialog());
 
@@ -101,7 +100,7 @@ void SelectNewSteamPath()
         return;
     }
 
-    ::steamPath = steamPath.string();
+    return steamPath.string();
 }
 
 nlohmann::json releaseInfo, osReleaseInfo;
@@ -139,49 +138,182 @@ std::string ToTimeAgo(const std::string& isoTimestamp)
     return fmt::format("about {} ago", formatTime(diff / 31536000, "year"));
 }
 
-const void FetchVersionInfo()
+const bool FetchVersionInfo()
 {
     const auto response = Http::Get("https://api.github.com/repos/shdwmtr/millennium/releases", false);
 
     if (response.empty())
     {
-        MessageBoxA(nullptr, "Failed to fetch version info", "Error", MB_ICONERROR);
-        return;
+        ShowMessageBox("Whoops!", "Failed to fetch version information from the GitHub API! Make sure you have a valid internet connection.", Error);
+        return false;
     }
 
-    releaseInfo = nlohmann::json::parse(response);
+    bool hasFoundReleaseInfo = false;
 
-    // Filter and find first release that isn't a pre-release
-    for (const auto& release : releaseInfo)
+    try 
     {
-        if (!release["prerelease"].get<bool>())
+        releaseInfo = nlohmann::json::parse(response);
+
+        // Filter and find first release that isn't a pre-release
+        for (const auto& release : releaseInfo)
         {
-            releaseInfo = release;
-
-            // Fetch OS release info
-            for (const auto& asset : releaseInfo["assets"])
+            if (!release["prerelease"].get<bool>())
             {
-                std::string assetName  = asset["name"];
-                std::string releaseTag = releaseInfo["tag_name"];
-
-                #ifdef WIN32
-                if (assetName == fmt::format("millennium-{}-windows-x86_64.zip", releaseTag))
-                #elif __linux__
-                if (assetName == fmt::format("millennium-{}-linux-x86_64.tar.gz", release["tag_name"].get<std::string>()))
-                #endif
+                releaseInfo = release;
+    
+                // Fetch OS release info
+                for (const auto& asset : releaseInfo["assets"])
                 {
-                    osReleaseInfo = asset;
-                    break;
+                    std::string assetName  = asset["name"];
+                    std::string releaseTag = releaseInfo["tag_name"];
+    
+                    #ifdef WIN32
+                    if (assetName == fmt::format("millennium-{}-windows-x86_64.zip", releaseTag))
+                    #elif __linux__
+                    if (assetName == fmt::format("millennium-{}-linux-x86_64.tar.gz", release["tag_name"].get<std::string>()))
+                    #endif
+                    {
+                        osReleaseInfo = asset;
+                        hasFoundReleaseInfo = true;
+                        break;
+                    }
                 }
+    
+                break;
             }
+        }
+    }
+    catch (const nlohmann::json::exception& e)
+    {
+        std::cerr << "JSON parse error: " << e.what() << std::endl;
+        ShowMessageBox("Whoops!", "Failed to parse version information from the GitHub API! Please wait a moment and try again, you're likely rate limited.", Error);
+        return false;
+    }
+    return hasFoundReleaseInfo;
+}
 
+void LinkCallback( ImGui::MarkdownLinkCallbackData data_ );
+inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData data_ );
+
+static ImGui::MarkdownConfig mdConfig; 
+
+
+void LinkCallback( ImGui::MarkdownLinkCallbackData data_ )
+{
+    std::string url( data_.link, data_.linkLength );
+    if( !data_.isImage )
+    {
+        ShellExecuteA( NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL );
+    }
+}
+
+inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData data_ )
+{
+    // In your application you would load an image based on data_ input. Here we just use the imgui font texture.
+    ImTextureID image = ImGui::GetIO().Fonts->TexID;
+    // > C++14 can use ImGui::MarkdownImageData imageData{ true, false, image, ImVec2( 40.0f, 20.0f ) };
+    ImGui::MarkdownImageData imageData;
+    imageData.isValid =         true;
+    imageData.useLinkCallback = false;
+    imageData.user_texture_id = image;
+    imageData.size =            ImVec2( 40.0f, 20.0f );
+
+    // For image resize when available size.x > image width, add
+    ImVec2 const contentSize = ImGui::GetContentRegionAvail();
+    if( imageData.size.x > contentSize.x )
+    {
+        float const ratio = imageData.size.y/imageData.size.x;
+        imageData.size.x = contentSize.x;
+        imageData.size.y = contentSize.x*ratio;
+    }
+
+    return imageData;
+}
+
+void ExampleMarkdownFormatCallback(const MarkdownFormatInfo& markdownFormatInfo_, bool start_)
+{
+    defaultMarkdownFormatCallback(markdownFormatInfo_, start_);        
+       
+    switch(markdownFormatInfo_.type)
+    {
+        case MarkdownFormatType::HEADING:
+        {
+            if(start_)
+            {
+                PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
+            }
+            else
+            {
+                PopStyleColor();
+            }
+            break;
+        }
+
+        case MarkdownFormatType::LINK:
+        {
+            if(start_)
+            {
+                PushStyleColor(ImGuiCol_Text, ImVec4(0.408f, 0.525f, 0.91f, 1.0f));
+            }
+            else
+            {
+                if (IsItemHovered())
+                {
+                    SetMouseCursor(ImGuiMouseCursor_Hand);
+                }
+
+                PopStyleColor();
+            }
             break;
         }
     }
 }
 
+void replaceNewlines(std::string& str) {
+    size_t pos = 0;
+    while ((pos = str.find("\n\n", pos)) != std::string::npos) {
+        str.replace(pos, 2, "\n");
+    }
+}
+
+void removeFirstLine(std::string& str) {
+    size_t pos = str.find("\n\n\n");
+    if (pos != std::string::npos) {
+        str.erase(0, pos + 1); 
+    }
+}
+
+void Markdown(std::string markdown_)
+{
+    removeFirstLine(markdown_);
+    replaceNewlines(markdown_);
+
+    static bool hasLogged = false;
+
+    if (!hasLogged)
+    {
+        std::cout << "Markdown: " << markdown_ << std::endl;
+        hasLogged = true;
+    }
+
+    ImGuiIO& io = GetIO();
+    // You can make your own Markdown function with your prefered string container and markdown config.
+    // > C++14 can use ImGui::MarkdownConfig mdConfig{ LinkCallback, NULL, ImageCallback, ICON_FA_LINK, { { H1, true }, { H2, true }, { H3, false } }, NULL };
+    mdConfig.linkCallback =         LinkCallback;
+    mdConfig.tooltipCallback =      NULL;
+    mdConfig.imageCallback =        ImageCallback;
+    mdConfig.headingFormats[0] =    { io.Fonts->Fonts[1], true };
+    mdConfig.headingFormats[1] =    { io.Fonts->Fonts[1], true };
+    mdConfig.headingFormats[2] =    { io.Fonts->Fonts[1], false };
+    mdConfig.userData =             NULL;
+    mdConfig.formatCallback =       ExampleMarkdownFormatCallback;
+    ImGui::Markdown( markdown_.c_str(), markdown_.length(), mdConfig );
+}
+
 const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 {
+    static std::string steamPath = GetSteamPath();
+
     ImGuiIO& io = GetIO();
     ImGuiViewport* viewport = GetMainViewport();
     
@@ -209,12 +341,94 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
     BeginChild("##PromptContainer", ImVec2(PromptContainerWidth, PromptContainerHeight), false);
     {
         PushFont(io.Fonts->Fonts[1]);
-        Text(fmt::format(u8"Install Millennium {} ✨", releaseInfo["tag_name"].get<std::string>()).c_str());
+        Text(fmt::format("Install Millennium {} ✨", releaseInfo["tag_name"].get<std::string>()).c_str());
         PopFont();
 
         Spacing();
         PushStyleColor(ImGuiCol_Text, ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
-        TextWrapped(fmt::format("Released {}", ToTimeAgo(releaseInfo["published_at"].get<std::string>())).c_str());
+        TextWrapped(fmt::format("Released {} • ", ToTimeAgo(releaseInfo["published_at"].get<std::string>())).c_str());
+        SameLine(0, ScaleX(5));
+        TextColored(ImVec4(0.408f, 0.525f, 0.91f, 1.0f), "View Release Notes");
+
+        if (IsItemHovered())
+        {
+            SetMouseCursor(ImGuiMouseCursor_Hand);
+        }
+        static bool showModal = false;
+        static bool hasSkippedFirstFrame = false;
+
+        if (IsItemClicked())
+        {
+            showModal = true;
+            hasSkippedFirstFrame = false;
+            OpenPopup("ReleaseNotes");
+        }
+
+        PushStyleVar(ImGuiStyleVar_WindowRounding, ScaleX(10.0f));
+        PushStyleVar(ImGuiStyleVar_WindowBorderSize, ScaleX(1.0f));
+        PushStyleColor(ImGuiCol_Border, ImVec4(0.48f, 0.484f, 0.492f, 0.5f));
+
+        SetNextWindowBgAlpha(1.f);
+        SetNextWindowSize(ImVec2(ScaleX(825), ScaleY(450)));
+        
+        static float scrollPosition = 0.0f; 
+        static float scrollVelocity = 0.0f; 
+        static const float scrollSpeed = 10.0f; 
+        static const float scrollFriction = 0.95f;
+        static const float minVelocityThreshold = 0.01f;
+
+        float opacityAnimation = EaseInOutFloat("ReleaseNotesAnimation", 0.f, 1.f, showModal, 0.3f);
+        PushStyleVar(ImGuiStyleVar_Alpha, opacityAnimation);
+        PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.098f, 0.102f, 0.11f, 1.0f));
+
+        if (BeginPopupModal("ReleaseNotes", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollWithMouse))
+        {
+            if (io.MouseWheel != 0.0f)
+            {
+                scrollVelocity -= io.MouseWheel * scrollSpeed;
+            }
+        
+            scrollVelocity *= scrollFriction;
+            scrollPosition += scrollVelocity; 
+        
+            const auto cursorPos = GetCursorPosY();
+            PushFont(io.Fonts->Fonts[1]);
+            PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
+            Text("Release Notes:");
+            SetCursorPosY(GetCursorPosY() + ScaleY(10));
+            Separator();
+            PopStyleColor();
+            PopFont();
+        
+            SetCursorPosY(cursorPos);
+            Markdown(releaseInfo["body"].get<std::string>());
+
+            scrollPosition = ImClamp(scrollPosition, 0.0f, GetScrollMaxY());
+
+            if (fabs(scrollVelocity) < minVelocityThreshold)
+            {
+                scrollVelocity = 0.0f;
+            }
+
+            SetScrollY(scrollPosition);
+            if (hasSkippedFirstFrame && !ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0)) 
+            {
+                showModal = false;
+                CloseCurrentPopup();
+            }           
+            hasSkippedFirstFrame = true;
+
+            // if (opacityAnimation <= 0.f && !showModal)
+            // {
+            //     std::cout << "done" << std::endl;
+            //     CloseCurrentPopup();
+            // }
+
+            EndPopup();
+        }
+        
+        PopStyleVar(3);
+        PopStyleColor(2);
 
         Spacing();
         Separator();
@@ -243,7 +457,7 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
         if (Button("...", ImVec2(GetContentRegionAvail().x, ScaleY(44))))
         {
-            SelectNewSteamPath();
+            steamPath = SelectNewSteamPath();
         }
         PopFont();
 
@@ -275,7 +489,7 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
         PushStyleColor(ImGuiCol_Text, ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
         SetCursorPosY(GetCursorPosY() + ScaleY(30));
 
-        RenderCheckBox(
+        const CheckBoxState* state = RenderCheckBox(
             true, 
             "Automatically check for updates", 
             "With this enabled, Millennium will automatically check for updates.\nIf updates are found, you will be prompted to install them."
@@ -286,7 +500,8 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
         RenderCheckBox(
             true, 
             "Automatically install found updates", 
-            "With this and the setting above enabled, you will NOT be prompted to\ninstall updates. They will be carried out automatically."
+            "With this and the setting above enabled, you will NOT be prompted to\ninstall updates. They will be carried out automatically.",
+            !state->isChecked
         );
 
         Spacing();
@@ -294,7 +509,6 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
         Spacing();
         Spacing();
 
-        Text("Download Information:");
         BulletText("Size: %s", BytesToReadableFormat(osReleaseInfo["size"].get<int>()).c_str());
         BulletText("Name: %s", osReleaseInfo["name"].get<std::string>().c_str());
 
@@ -303,56 +517,18 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
     EndChild();
     PopStyleColor();
 
-    SetCursorPos(ImVec2(xPos, viewport->Size.y - BottomNavBarHeight + 1));
-
-    PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30))     );
-    PushStyleColor(ImGuiCol_Border,             ImVec4(0.f, 0.f, 0.f, 0.f)         );
-    PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f                               );
-    PushStyleColor(ImGuiCol_ChildBg,            ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
-
-    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
+    RenderBottomNavBar("InstallPrompt", xPos, [router, xPos] 
     {
-        SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
-        Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));
-
-        SameLine(0, ScaleX(42));
-        const float cursorPosSave = GetCursorPosX();
-
-        SetCursorPosY(GetCursorPosY() - ScaleX(12));
-        TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam Homebrew & Millennium are not affiliated with");
-
-        SetCursorPos(ImVec2(cursorPosSave, GetCursorPosY() - ScaleY(20)));
-        TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam®, Valve, or any of their partners.");
-        
-        SameLine(0);
-        SetCursorPosY(GetCursorPosY() - ScaleY(25));
-
         static bool isButtonHovered = false;
-        float currentColor = EaseInOutFloat("##NextButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
+        float currentColor = EaseInOutFloat("##InstallButton", 1.0f, 0.8f, isButtonHovered, 0.3f);
 
         PushStyleColor(ImGuiCol_Button,        ImVec4(currentColor, currentColor, currentColor, 1.0f));
         PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(currentColor, currentColor, currentColor, 1.0f));
-        PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
-        PushStyleColor(ImGuiCol_Text,          ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        const int FooterContainerWidth = ScaleX(300);
-        const float buttonPos = GetCursorPosY();
-
-        SetCursorPosX(xPos + GetCursorPosX() + GetContentRegionAvail().x - FooterContainerWidth);
-        SetCursorPosY(GetCursorPosY() + ScaleY(10));
-
-        Image((ImTextureID)(intptr_t)discordIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
-        SameLine(0, ScaleX(25));
-        SetCursorPosY(GetCursorPosY() - ScaleY(15));
-
-        Image((ImTextureID)(intptr_t)gtihubIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
-        SameLine(0, ScaleX(25));
-
-        SetCursorPosY(buttonPos);
 
         if (Button("Install", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
         {
-            // routerPtr->goInstaller();
+            std::thread(StartInstaller, steamPath, std::ref(releaseInfo), std::ref(osReleaseInfo)).detach();
+            router->navigateNext();
         }
 
         if (isButtonHovered)
@@ -360,11 +536,7 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
             SetMouseCursor(ImGuiMouseCursor_Hand);
         }
 
-        PopStyleColor(4);
+        PopStyleColor(2);
         isButtonHovered = IsItemHovered() || (IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && IsMouseDown(ImGuiMouseButton_Left));
-    }
-    EndChild();
-
-    PopStyleVar(2);
-    PopStyleColor(2);
+    });
 }

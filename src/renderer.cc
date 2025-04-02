@@ -23,8 +23,6 @@ void RenderImGui(GLFWwindow* window, std::shared_ptr<RouterNav> router)
         PopStyleVar();
 
         isTitleBarHovered = RenderTitleBarComponent(router);
-
-        // ImGui::SetCursorPosY(100);
         router->update(); 
 
         Component currentPanel       = router->getCurrentComponent();
@@ -47,20 +45,26 @@ void RenderImGui(GLFWwindow* window, std::shared_ptr<RouterNav> router)
 
         if (ImGui::IsKeyPressed(ImGuiKey_MouseX1))
         {
-            router->navigateBack();
+            if (router->canGoBack()) router->navigateBack();
         }
-
         if (ImGui::IsKeyPressed(ImGuiKey_MouseX2))
         {
-            router->navigateNext();
+            if (router->canGoForward()) router->navigateNext();
         }
         End();
+
+        RenderMessageBoxes();
     }
     Render();
 
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
+
+    ImVec4 clear_color = ImVec4(0.f, 0.f, 0.f, 0.f);
+
+    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());
     glfwSwapBuffers(window);

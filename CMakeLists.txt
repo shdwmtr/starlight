@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Installer VERSION 1.0 LANGUAGES CXX)
 
 # Specify the C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(BUILD_SHARED_LIBS OFF)
@@ -14,10 +14,15 @@ set(GLFW_BUILD_TESTS OFF)
 set(GLFW_BUILD_EXAMPLES OFF)
 set(GLFW_BUILD_STATIC ON)
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -fpermissive -fno-diagnostics-show-option")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mwindows -s")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fvisibility=hidden -s")
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g3 -fvisibility=hidden")
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 endif()
 
 add_compile_definitions(
@@ -38,9 +43,13 @@ set(SOURCES
     src/routes/uninstall_select.cc
     src/components/titlebar.cc
     src/components/checkbox.cc
+    src/components/bottombar.cc
+    src/components/message.cc
     src/animate.cc
     src/router.cc
     src/dpi.cc
+    src/installer/task_scheduler.cc
+    src/installer/unzip.cc
     vendor/imgui/src/imgui.cpp
     vendor/imgui/src/imgui_demo.cpp
     vendor/imgui/src/imgui_draw.cpp
@@ -53,7 +62,7 @@ set(SOURCES
 )
 
 # Add the executable
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 
 find_program(WINDRES windres)
 if (WINDRES)
@@ -68,8 +77,6 @@ if (WINDRES)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/version.o)
 endif()
 
-
-# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 
 # Include directories
 include_directories(include)
@@ -108,9 +115,10 @@ elseif(WIN32)
     find_package(glfw3 CONFIG REQUIRED)
     find_package(glad CONFIG REQUIRED)
     find_package(CURL REQUIRED)
+    find_package(unofficial-minizip CONFIG REQUIRED) # used for extracting zip files
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${Stb_INCLUDE_DIR})
-
+    
     target_link_libraries(${PROJECT_NAME} PRIVATE
         Freetype::Freetype
         glfw
@@ -119,6 +127,8 @@ elseif(WIN32)
         glad::glad
         imm32
         CURL::libcurl
+        dwmapi
+        unofficial::minizip::minizip
     )
 endif()
 

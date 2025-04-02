@@ -9,7 +9,7 @@
 
 using namespace ImGui;
 
-const CheckBoxState* RenderCheckBox(bool checked, const char* description, const char* tooltipText)
+const CheckBoxState* RenderCheckBox(bool checked, const char* description, const char* tooltipText, bool disabled, bool endChild)
 {
     static std::unordered_map<std::string, CheckBoxState> checkBoxStates;
     auto& state = checkBoxStates.try_emplace(description, checked).first->second;
@@ -20,8 +20,34 @@ const CheckBoxState* RenderCheckBox(bool checked, const char* description, const
     PushStyleColor(ImGuiCol_CheckMark,            ImVec4(1.0f, 1.0f, 1.0f, 1.0f)     );
     PushStyleColor(ImGuiCol_FrameBgActive,        ImVec4(0.098f, 0.102f, 0.11f, 1.0f));
 
-    std::string checkBoxMessage = "  " + std::string(description);
-    Checkbox(checkBoxMessage.c_str(), &state.isChecked);
+
+    BeginDisabled(disabled); 
+
+    if (disabled)
+    {
+        state.isChecked = false;
+    }
+
+    if (endChild)
+    {
+        Checkbox("##Checkbox", &state.isChecked);
+        EndDisabled();
+    
+        PopStyleColor(3);
+        PopStyleVar(2);
+    
+        EndChild();
+        SameLine(0, ScaleX(20));
+        SetCursorPosY(GetCursorPosY() + ScaleY(3));
+        Text(description);
+    }
+    else
+    {
+        std::string checkBoxMessage = " " + std::string(description);
+
+        Checkbox(checkBoxMessage.c_str(), &state.isChecked);
+        EndDisabled();
+    }
 
     if (tooltipText)
     {
@@ -45,8 +71,11 @@ const CheckBoxState* RenderCheckBox(bool checked, const char* description, const
         state.isHovered = IsItemHovered() || (IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && IsMouseDown(ImGuiMouseButton_Left));
     }
 
-    PopStyleColor(3);
-    PopStyleVar(2);
+    if (!endChild)
+    {
+        PopStyleColor(3);
+        PopStyleVar(2);
+    }
 
     return &state;
 }

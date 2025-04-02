@@ -122,7 +122,7 @@ void StartUninstaller()
 {
     uninstallComponents = 
     {
-        { "Millennium",                 std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "user32.dll", steamPath / "millennium.dll" }))},
+        { "Millennium",                 std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "user32.dll", steamPath / "millennium.dll", steamPath / "python311.dll" }))},
         { "Custom Steam Components",    std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "ext" / "data" / "assets", steamPath / "ext" / "data" / "shims" }))},
         { "Dependencies",               std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "ext" / "data" / "cache" }))},
         { "Themes",                     std::make_tuple(ComponentState({ false, true }), MakeComponentProps({ steamPath / "steamui" / "skins" }))},
@@ -161,44 +161,51 @@ const void RenderComponents()
 
         std::string formattedComponent = component + ": " + BytesToReadableFormat(props.byteSize);
 
-        if (!isUninstalling)
-        {
-            state.isSelected = RenderCheckBox(state.isSelected, formattedComponent.c_str(), strPathList.c_str())->isChecked;
-        }
-        else
-        {
+        BeginChild(component.c_str(), ImVec2(ScaleX(35), ScaleY(35)), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        { 
+            /** Not currently uninstalling, the user is selecting components to be uninstalled */
+            if (!isUninstalling)
+            {
+                state.isSelected = RenderCheckBox(state.isSelected, formattedComponent.c_str(), strPathList.c_str(), false, true)->isChecked;
+                continue;
+            }
+
+            /** Item is excluded from the uninstaller */
             if (!state.isSelected)
             {
-                SetCursorPos(ImVec2(GetCursorPosX() + ScaleX(4), GetCursorPosY() + ScaleY(4)));
-                Image((ImTextureID)(intptr_t)excludedIconTexture, ImVec2(ScaleX(25), ScaleY(25)));
-                SetCursorPosY(GetCursorPosY() + ScaleY(1));
-                SameLine(0, ScaleX(19));
-                Text(formattedComponent.c_str());
+                SetCursorPos(ImVec2(GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2)));
+                Image((ImTextureID)(intptr_t)excludedIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
+                EndChild();
+                SameLine(0, ScaleX(20));
                 SetCursorPosY(GetCursorPosY() + ScaleY(3));
-            }
-            else
-            {
-                switch (state.uninstallState.state)
-                {
-                    case ComponentState::UninstallState::Uninstalling:
-                    {
-                        const int spinnerSize = ScaleX(10);
+                Text(formattedComponent.c_str());
 
-                        SetCursorPos(ImVec2(GetCursorPosX() + spinnerSize / 2, GetCursorPosY() + spinnerSize / 2));
-                        Spinner<SpinnerTypeT::e_st_ang>("SpinnerAngNoBg", Radius{(spinnerSize)}, Thickness{(ScaleX(3))}, Color{ImColor(255, 255, 255, 255)}, BgColor{ImColor(255, 255, 255, 0)}, Speed{6}, Angle{IM_PI}, Mode{0});
-                        SameLine(0, ScaleX(23));
-                        SetCursorPosY(GetCursorPosY() - spinnerSize / 4);
-                        Text(formattedComponent.c_str());
-                        // SetCursorPosY(GetCursorPosY() + ScaleY(2));
-                        break;
-                    }
-                    case ComponentState::UninstallState::Success:
-                        Text("%s: Uninstalled", formattedComponent.c_str());
-                        break;
-                    case ComponentState::UninstallState::Failed:
-                        Text("%s: Failed", formattedComponent.c_str());
-                        break;
+                continue;
+            }
+
+            /** Render the state of the uninstalling components */
+            switch (state.uninstallState.state)
+            {
+                case ComponentState::UninstallState::Uninstalling:
+                {
+                    const float spinnerSize = ScaleX(10);
+                    
+                    SetCursorPos(ImVec2(GetCursorPosX() + spinnerSize / 2, (GetCursorPosY() + spinnerSize / 2) - 5.f));
+                    Spinner<SpinnerTypeT::e_st_ang>("SpinnerAngNoBg", Radius{(spinnerSize)}, Thickness{(ScaleX(3))}, Color{ImColor(255, 255, 255, 255)}, BgColor{ImColor(255, 255, 255, 0)}, Speed{6}, Angle{IM_PI}, Mode{0});
+                    EndChild();
+                    SameLine(0, ScaleX(20));
+                    SetCursorPosY(GetCursorPosY() + ScaleY(3));
+                    Text(formattedComponent.c_str());
+                    break;
                 }
+                case ComponentState::UninstallState::Success:
+                {
+                    Text("%s: Uninstalled", formattedComponent.c_str());
+                }
+                break;
+                case ComponentState::UninstallState::Failed:
+                Text("%s: Failed", formattedComponent.c_str());
+                break;
             }
         }
     }
@@ -233,7 +240,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
     BeginChild("##PromptContainer", ImVec2(PromptContainerWidth, PromptContainerHeight), false);
     {
         PushFont(io.Fonts->Fonts[1]);
-        Text(u8"Uninstall Millennium ✨");
+        Text("Uninstall Millennium 😔");
         PopFont();
 
         SetCursorPosY(GetCursorPosY() + ScaleY(5));

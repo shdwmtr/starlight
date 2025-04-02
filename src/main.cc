@@ -28,6 +28,7 @@
 #include <fmt/format.h>
 #include <stb_image.h>
 #include <util.h>
+#include <dwmapi.h>
 
 using namespace ImGui;
 
@@ -55,25 +56,29 @@ void SetupImGuiScaling(GLFWwindow* window)
 
     std::cout << "Setting up ImGui scaling with factor: " << scaleFactor << std::endl;
     ImGuiIO& io = GetIO();
+    /** Load emoji font and merge it into Geist 18pt */
+    const auto fontPath = "C:/Windows/Fonts/seguiemj.ttf";
+    static ImFontConfig cfg;
+    static ImWchar ranges[] = { 0x1, 0x1FFFF, 0 };
 
+    cfg.OversampleH = cfg.OversampleV = 1;
+    cfg.MergeMode   = true;
+    cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_LoadColor;
+
+    
     // Clear fonts
     io.Fonts->Clear();
     io.Fonts->AddFontFromMemoryTTF((void*)GeistVaraible, sizeof(GeistVaraible), 16.0f * scaleFactor);
-    io.Fonts->AddFontFromMemoryTTF((void*)Geist_Bold,    sizeof(Geist_Bold),    18.0f * scaleFactor);
-
-    /** Load emoji font and merge it into Geist 18pt */
-    const auto fontPath = "C:/Windows/Fonts/seguiemj.ttf";
-
     if (std::filesystem::exists(fontPath)) 
     {
-        static ImFontConfig cfg;
-        static ImWchar ranges[] = { 0x1, 0x1FFFF, 0 };
-
-        cfg.OversampleH = cfg.OversampleV = 1;
-        cfg.MergeMode   = true;
-        cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_LoadColor;
+        io.Fonts->AddFontFromFileTTF(fontPath, 12.0f * scaleFactor, &cfg, ranges);
+    }
+    io.Fonts->AddFontFromMemoryTTF((void*)Geist_Bold,    sizeof(Geist_Bold),    18.0f * scaleFactor);
+    if (std::filesystem::exists(fontPath)) 
+    {
         io.Fonts->AddFontFromFileTTF(fontPath, 16.0f * scaleFactor, &cfg, ranges);
     }
+
 
     unsigned char* pixels;
     int width, height;
@@ -152,9 +157,42 @@ void setWindowIconFromMemory(GLFWwindow* window, const unsigned char* imageData,
     glfwSetWindowIcon(window, 1, icon);
 }
 
-// int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-int main(int argc, char** argv)
+void RenderBlur( HWND hwnd ) {
+    struct ACCENTPOLICY {
+        int na;
+        int nf;
+        int nc;
+        int nA;
+    };
+    struct WINCOMPATTRDATA {
+        int na;
+        PVOID pd;
+        ULONG ul;
+    };
+
+    const HINSTANCE hm = LoadLibrary( "user32.dll" );
+    if ( hm ) {
+        typedef BOOL( WINAPI* pSetWindowCompositionAttribute )( HWND, WINCOMPATTRDATA* );
+
+        const pSetWindowCompositionAttribute SetWindowCompositionAttribute = ( pSetWindowCompositionAttribute )GetProcAddress( hm, "SetWindowCompositionAttribute" );
+        if ( SetWindowCompositionAttribute ) {
+            ACCENTPOLICY policy = { 3, 0, 0, 0 };
+            WINCOMPATTRDATA data = { 19, &policy,sizeof( ACCENTPOLICY ) };
+            SetWindowCompositionAttribute( hwnd, &data );
+        }
+        FreeLibrary( hm );
+    }
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    // Allocate console
+    AllocConsole();
+    FILE* file;
+    freopen_s(&file, "CONOUT$", "w", stdout);
+    freopen_s(&file, "CONOUT$", "w", stderr);
+    std::cout << "Console allocated." << std::endl;
+ 
     glfwSetErrorCallback(GLFWErrorCallback);
     if (!glfwInit())
     {
@@ -183,8 +221,13 @@ int main(int argc, char** argv)
     {
         return 1;
     }
-
+    
     SetupDPI(window);
+
+    #ifdef _WIN32
+    HWND hwnd = glfwGetWin32Window(window);
+    RenderBlur(hwnd);
+    #endif
 
     // Load image from memory
     int width, height, channels;

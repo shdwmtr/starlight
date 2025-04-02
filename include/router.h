@@ -20,8 +20,11 @@ public:
     void navigateNext();
     void navigateBack();
 
-    bool canGoBack()    const { return currentIndex > 0;                     }
-    bool canGoForward() const { return currentIndex + 1 < components.size(); }
+    bool canGoBack()    const { return softCanGoBack && currentIndex > 0;                        }
+    bool canGoForward() const { return softCanGoForward && currentIndex + 1 < components.size(); }
+
+    void setCanGoBack(const bool newValue);
+    void setCanGoForward(const bool newValue);
 
     Component getCurrentComponent() const;
     Component getTransitioningComponent() const;
@@ -42,6 +45,9 @@ private:
     float animTime;
     int animDirection;
     const float animationDuration = 0.3f;
+
+    bool softCanGoBack = true;
+    bool softCanGoForward = true;
 
     float lerp(float a, float b, float t) const;
     void startAnimation(int direction);

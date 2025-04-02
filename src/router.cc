@@ -25,6 +25,16 @@ void RouterNav::navigateBack()
     }
 }
 
+void RouterNav::setCanGoBack(const bool newValue) 
+{
+    softCanGoBack = newValue;
+}
+
+void RouterNav::setCanGoForward(const bool newValue) 
+{
+    softCanGoForward = newValue;
+}
+
 Component RouterNav::getCurrentComponent() const 
 {
     return components[currentIndex];
