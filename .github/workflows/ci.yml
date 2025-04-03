@@ -50,11 +50,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: (Setup) Assets Build Environment
-        run: cd assets && npm install && npm run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install prerequisites
         uses: msys2/setup-msys2@v2
         with:
