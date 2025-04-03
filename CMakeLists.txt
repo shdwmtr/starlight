@@ -81,6 +81,7 @@ endif()
 # Include directories
 include_directories(include)
 include_directories(vendor/imgui/include)
+include_directories(vendor/imgui/extern)
 include_directories(vendor/nlohmann/include)
 include_directories(vendor/ini/src)
 
