@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/shdwmtr/starlight/compare/v1.0.0...v1.0.1) (2025-04-03)
+
+
+### Bug Fixes
+
+* Fix build ([9d85eae](https://github.com/shdwmtr/starlight/commit/9d85eae0e1db824192c0ae63946969e79d0ce1fa))
+
 # 1.0.0 (2025-04-03)
 
 
