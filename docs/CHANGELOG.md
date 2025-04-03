@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/shdwmtr/starlight/compare/v1.0.2...v1.0.3) (2025-04-03)
+
+
+### Bug Fixes
+
+* Stop the developer console from allocating ([9b0f6f3](https://github.com/shdwmtr/starlight/commit/9b0f6f38f6b9ff2c4f0de28ce7ea448343d9711e))
+
 ## [1.0.2](https://github.com/shdwmtr/starlight/compare/v1.0.1...v1.0.2) (2025-04-03)
 
 
