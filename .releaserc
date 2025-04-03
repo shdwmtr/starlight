@@ -23,7 +23,7 @@
     {
       "path": "@semantic-release/github",
       "assets": [
-        "./build/release/MillenniumInstaller-Windows.exe"
+        "./build/MillenniumInstaller-Windows.exe"
       ]
     }
   ]
