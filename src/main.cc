@@ -174,6 +174,8 @@ void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shar
             glfwShowWindow(window);
             hasShown = true;
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
