@@ -82,6 +82,7 @@ jobs:
         shell: msys2 {0}
         run: |
           cmake --build build/release --config Release -- -j$(nproc)
+          mkdir -p D:/a/build
           mv build/release/Installer.exe D:/a/build/MillenniumInstaller-Windows.exe
 
       - name: Upload Build Artifact
