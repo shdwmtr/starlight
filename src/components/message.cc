@@ -46,11 +46,21 @@ struct MessageBoxProps
 
 std::queue<MessageBoxProps> messageBoxQueue;
 
+/**
+ * Show a message box with the given title, body, and level.
+ * The message box will be added to the queue and displayed when RenderMessageBoxes() is called. 
+ */
 void ShowMessageBox(std::string title, std::string body, MessageLevel level)
 {
     messageBoxQueue.push({ title, body, level });
 }
 
+/** 
+ * Render the message boxes in the queue.
+ * This function will create a popup for each message box in the queue.
+ * The message boxes will be displayed one at a time, and the user can close them by clicking outside the popup or pressing the "Continue" button.
+ * The function will also handle the scrolling of the message box content if it exceeds the window size.
+ */
 void RenderMessageBoxes()
 {
     if (messageBoxQueue.size() <= 0)
@@ -64,8 +74,6 @@ void RenderMessageBoxes()
     const MessageBoxProps currentBox = messageBoxQueue.front();
 
     SetNextWindowBgAlpha(1.f);
-    // SetNextWindowSize(ImVec2(ScaleX(825), ScaleY(450)));
-    
     static bool hasSkippedFirstFrame = false;
 
     static float scrollPosition = 0.0f; 
@@ -75,6 +83,7 @@ void RenderMessageBoxes()
     static const float minVelocityThreshold = 0.01f;
 
     float opacityAnimation = EaseInOutFloat("MessageAlertPopupAnimation", 0.f, 1.f, true, 0.3f);
+    
     PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.098f, 0.102f, 0.11f, 1.0f));
     PushStyleColor(ImGuiCol_Border,  ImVec4(0.48f, 0.484f, 0.492f, 0.5f));
     PushStyleVar(ImGuiStyleVar_Alpha, opacityAnimation);
@@ -96,18 +105,12 @@ void RenderMessageBoxes()
         const auto cursorPos = GetCursorPosY();
 
         PushFont(io.Fonts->Fonts[1]);
-
+        /** Render icon based on message level */
         switch (currentBox.level)
         {
-            case MessageLevel::Info:
-                Text("ℹ️");
-                break;
-            case MessageLevel::Warning:
-                Text("⚠️");
-                break;
-            case MessageLevel::Error:
-                Text("❌");
-                break;
+            case MessageLevel::Info:    Text("ℹ️"); break;
+            case MessageLevel::Warning: Text("⚠️"); break;
+            case MessageLevel::Error:   Text("❌"); break;
         }
         SameLine(0, ScaleX(-10));
 

@@ -82,19 +82,21 @@ GLFWwindow* g_Window = nullptr;
 void SetupImGuiScaling(GLFWwindow* window) 
 {
     SetupDPI(window);
+    ImGuiIO& io = GetIO();
+    ImGuiStyle& style = GetStyle();
+    GLuint fontTexture;
+
+    unsigned char* pixels;
+    int width, height;
     float scaleFactor = XDPI;
 
-    std::cout << "Setting up ImGui scaling with factor: " << scaleFactor << std::endl;
-    ImGuiIO& io = GetIO();
-    /** Load emoji font and merge it into Geist 18pt */
-    const auto fontPath = "C:/Windows/Fonts/seguiemj.ttf";
+    constexpr static const auto fontPath = "C:/Windows/Fonts/seguiemj.ttf";
     static ImFontConfig cfg;
     static ImWchar ranges[] = { 0x1, 0x1FFFF, 0 };
 
     cfg.OversampleH = cfg.OversampleV = 1;
     cfg.MergeMode   = true;
     cfg.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_LoadColor;
-
     
     // Clear fonts
     io.Fonts->Clear();
@@ -109,12 +111,7 @@ void SetupImGuiScaling(GLFWwindow* window)
         io.Fonts->AddFontFromFileTTF(fontPath, 16.0f * scaleFactor, &cfg, ranges);
     }
 
-
-    unsigned char* pixels;
-    int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-
-    GLuint fontTexture;
 
     glGenTextures  ( 1, &fontTexture );
     glBindTexture  ( GL_TEXTURE_2D, fontTexture );
@@ -125,10 +122,9 @@ void SetupImGuiScaling(GLFWwindow* window)
     io.Fonts->SetTexID((ImTextureID)(intptr_t)fontTexture);
     io.DisplayFramebufferScale = ImVec2(scaleFactor, scaleFactor);
 
-    ImGuiStyle& style = GetStyle();
-    style = ImGuiStyle(); // Reset style
+    /** Reset current ImGui style */
+    style = ImGuiStyle(); 
     style.ScaleAllSizes(scaleFactor);
-
     SetupColorScheme();
 }
 
@@ -141,7 +137,6 @@ void FrameBufferSizeCallback(GLFWwindow* window, int width, int height)
 void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shared_ptr<RouterNav> router)
 {
     glfwMakeContextCurrent(window); 
-
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
     {
         std::cerr << "Failed to initialize GLAD\n";
@@ -149,11 +144,9 @@ void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shar
     }
 
     SetupColorScheme();
-
     SetupImGuiScaling(window);
     SetBorderlessWindowStyle(window, router);
     LoadTextures();
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
@@ -189,30 +182,37 @@ void setWindowIconFromMemory(GLFWwindow* window, const unsigned char* imageData,
     glfwSetWindowIcon(window, 1, icon);
 }
 
-void RenderBlur( HWND hwnd ) {
-    struct ACCENTPOLICY {
+void RenderBlur( HWND hwnd ) 
+{
+    struct ACCENTPOLICY 
+    {
         int na;
         int nf;
         int nc;
         int nA;
     };
-    struct WINCOMPATTRDATA {
+    
+    struct WINCOMPATTRDATA 
+    {
         int na;
         PVOID pd;
         ULONG ul;
     };
 
-    const HINSTANCE hm = LoadLibrary( "user32.dll" );
-    if ( hm ) {
-        typedef BOOL( WINAPI* pSetWindowCompositionAttribute )( HWND, WINCOMPATTRDATA* );
+    const HINSTANCE user32Handle = LoadLibrary( "user32.dll" );
 
-        const pSetWindowCompositionAttribute SetWindowCompositionAttribute = ( pSetWindowCompositionAttribute )GetProcAddress( hm, "SetWindowCompositionAttribute" );
-        if ( SetWindowCompositionAttribute ) {
+    if (user32Handle) 
+    {
+        typedef BOOL( WINAPI* pSetWindowCompositionAttribute )( HWND, WINCOMPATTRDATA* );
+        const pSetWindowCompositionAttribute SetWindowCompositionAttribute = (pSetWindowCompositionAttribute)GetProcAddress(user32Handle, "SetWindowCompositionAttribute");
+
+        if ( SetWindowCompositionAttribute ) 
+        {
             ACCENTPOLICY policy = { 3, 0, 0, 0 };
-            WINCOMPATTRDATA data = { 19, &policy,sizeof( ACCENTPOLICY ) };
-            SetWindowCompositionAttribute( hwnd, &data );
+            WINCOMPATTRDATA data = { 19, &policy,sizeof(ACCENTPOLICY) };
+            SetWindowCompositionAttribute(hwnd, &data);
         }
-        FreeLibrary( hm );
+        FreeLibrary(user32Handle);
     }
 }
 
