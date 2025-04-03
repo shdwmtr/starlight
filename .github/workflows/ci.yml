@@ -82,7 +82,7 @@ jobs:
         shell: msys2 {0}
         run: |
           cmake --build build/release --config Release -- -j$(nproc)
-          mv build\release\Installer.exe D:/a/build/MillenniumInstaller-Windows.exe
+          mv build/release/Installer.exe D:/a/build/MillenniumInstaller-Windows.exe
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4

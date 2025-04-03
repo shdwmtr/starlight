@@ -188,10 +188,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     // Allocate console
     AllocConsole();
-    FILE* file;
-    freopen_s(&file, "CONOUT$", "w", stdout);
-    freopen_s(&file, "CONOUT$", "w", stderr);
-    std::cout << "Console allocated." << std::endl;
+    // FILE* file;
+    // freopen_s(&file, "CONOUT$", "w", stdout);
+    // freopen_s(&file, "CONOUT$", "w", stderr);
+    // std::cout << "Console allocated." << std::endl;
  
     glfwSetErrorCallback(GLFWErrorCallback);
     if (!glfwInit())
