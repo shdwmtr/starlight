@@ -217,7 +217,7 @@ void RenderBlur( HWND hwnd ) {
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     // Allocate console
-    AllocConsole();
+    // AllocConsole();
     // FILE* file;
     // freopen_s(&file, "CONOUT$", "w", stdout);
     // freopen_s(&file, "CONOUT$", "w", stderr);
