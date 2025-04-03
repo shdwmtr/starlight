@@ -77,7 +77,7 @@ void InstallReleaseAssets(std::unique_ptr<double>& progress, const nlohmann::jso
     const auto fileName = std::filesystem::temp_directory_path() / osReleaseInfo["name"].get<std::string>();
     double currentFileProgress = 0.0;
 
-    ExtractZippedArchive(fileName.string().c_str(), "C:/Users/Desktop-PC/Downloads/folder", progress.get(), &currentFileProgress);
+    ExtractZippedArchive(fileName.string().c_str(), steamPath.c_str(), progress.get(), &currentFileProgress);
 }
 
 std::atomic<bool> hasTaskSchedulerFinished { false };
