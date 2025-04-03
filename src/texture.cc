@@ -14,6 +14,8 @@ GLuint discordIconTexture;
 GLuint gtihubIconTexture;
 GLuint backBtnTexture;
 GLuint excludedIconTexture;
+GLuint errorIconTexture;
+GLuint successIconTexture;
 
 bool LoadTextureFromMemory(const void* data, size_t data_size, GLuint* out_texture, int* out_width, int* out_height)
 {
@@ -54,4 +56,6 @@ void LoadTextures()
     LoadTextureFromMemory(githubIcon, sizeof(githubIcon), &gtihubIconTexture);
     LoadTextureFromMemory(backBtn, sizeof(backBtn), &backBtnTexture);
     LoadTextureFromMemory(excludedIcon, sizeof(excludedIcon), &excludedIconTexture);
+    LoadTextureFromMemory(errorIcon, sizeof(errorIcon), &errorIconTexture);
+    LoadTextureFromMemory(successIcon, sizeof(successIcon), &successIconTexture);
 }

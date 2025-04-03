@@ -19,8 +19,12 @@
 #include <fmt/format.h>
 #include <util.h>
 #include "imgui_markdown.h" 
+#include <mini/ini.h>
 
 using namespace ImGui;
+
+const CheckBoxState* checkForUpdates;
+const CheckBoxState* automaticallyInstallUpdates;
 
 std::string OpenFolderDialog()
 {
@@ -85,19 +89,19 @@ std::string OpenFolderDialog()
     return result;
 }
 
-std::string SelectNewSteamPath()
+std::optional<std::string> SelectNewSteamPath()
 {
     const auto steamPath = std::filesystem::path(OpenFolderDialog());
 
     if (steamPath.empty())
     {
-        return;
+        return {};
     }
 
     if (!std::filesystem::exists(steamPath / "steam.exe"))
     {
         MessageBoxA(nullptr, "Invalid Steam path selected", "Error", MB_ICONERROR);
-        return;
+        return {};
     }
 
     return steamPath.string();
@@ -310,6 +314,35 @@ void Markdown(std::string markdown_)
     ImGui::Markdown( markdown_.c_str(), markdown_.length(), mdConfig );
 }
 
+void SetUserSettings(std::string steamPath)
+{
+    const auto path = std::filesystem::path(steamPath) / "ext" / "millennium.ini";
+
+    if (!std::filesystem::exists(path))
+    {
+        std::filesystem::create_directories(path.parent_path());
+        std::ofstream outputFile(path.string());
+    }
+
+    try 
+    {
+        auto file = mINI::INIFile(path.string());
+        auto ini = mINI::INIStructure();
+
+        file.read(ini);
+        file.write(ini);
+
+        ini["Settings"]["check_for_updates"] = checkForUpdates->isChecked ? "yes" : "no";
+        ini["Settings"]["check_for_update_notify"] = automaticallyInstallUpdates->isChecked ? "no" : "yes";
+
+        file.write(ini);
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << "Error writing to INI file: " << ex.what() << std::endl;
+    }
+}
+
 const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 {
     static std::string steamPath = GetSteamPath();
@@ -417,13 +450,6 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
                 CloseCurrentPopup();
             }           
             hasSkippedFirstFrame = true;
-
-            // if (opacityAnimation <= 0.f && !showModal)
-            // {
-            //     std::cout << "done" << std::endl;
-            //     CloseCurrentPopup();
-            // }
-
             EndPopup();
         }
         
@@ -457,7 +483,11 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
         if (Button("...", ImVec2(GetContentRegionAvail().x, ScaleY(44))))
         {
-            steamPath = SelectNewSteamPath();
+            auto newSteamPath = SelectNewSteamPath();
+            if (newSteamPath.has_value())
+            {
+                steamPath = newSteamPath.value();
+            }
         }
         PopFont();
 
@@ -489,7 +519,7 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
         PushStyleColor(ImGuiCol_Text, ImVec4(0.422f, 0.425f, 0.441f, 1.0f));
         SetCursorPosY(GetCursorPosY() + ScaleY(30));
 
-        const CheckBoxState* state = RenderCheckBox(
+        checkForUpdates = RenderCheckBox(
             true, 
             "Automatically check for updates", 
             "With this enabled, Millennium will automatically check for updates.\nIf updates are found, you will be prompted to install them."
@@ -497,11 +527,11 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
         Spacing();
 
-        RenderCheckBox(
+        automaticallyInstallUpdates = RenderCheckBox(
             true, 
             "Automatically install found updates", 
             "With this and the setting above enabled, you will NOT be prompted to\ninstall updates. They will be carried out automatically.",
-            !state->isChecked
+            !checkForUpdates->isChecked
         );
 
         Spacing();
@@ -527,6 +557,8 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
         if (Button("Install", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
         {
+            SetUserSettings(steamPath);
+
             std::thread(StartInstaller, steamPath, std::ref(releaseInfo), std::ref(osReleaseInfo)).detach();
             router->navigateNext();
         }

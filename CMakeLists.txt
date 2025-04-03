@@ -82,6 +82,7 @@ endif()
 include_directories(include)
 include_directories(vendor/imgui/include)
 include_directories(vendor/nlohmann/include)
+include_directories(vendor/ini/src)
 
 # Platform-specific settings
 if(UNIX AND NOT APPLE)

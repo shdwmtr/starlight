@@ -4725,7 +4725,7 @@ namespace ImSpinner
           }
 #undef $
         }
-        ImGui::PopID();
+        // ImGui::PopID();
       };
 
       if( ImGui::BeginTable("Demo table", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV) )

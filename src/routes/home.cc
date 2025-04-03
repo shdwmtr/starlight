@@ -256,7 +256,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
 
                     const auto StartUninstall = [router]() 
                     {
-                        StartUninstaller();
+                        InitializeUninstaller();
                         router->navigateNext();
                         isLoading.store(false, std::memory_order_relaxed);
                     };

@@ -7,12 +7,12 @@ IDI_ICON1 ICON "../static/logo.ico"
 
 #define VER_COMPANYNAME_STR         "Steam Homebrew\0"
 #define VER_FILEDESCRIPTION_STR     "An installer application for Millennium\0"
-#define VER_INTERNALNAME_STR        "StarlightInstaller-Windows.exe\0"
-#define VER_ORIGINALFILENAME_STR    "StarlightInstaller-Windows.exe\0"
+#define VER_INTERNALNAME_STR        "MillenniumInstaller-Windows.exe\0"
+#define VER_ORIGINALFILENAME_STR    "MillenniumInstaller-Windows.exe\0"
 #define VER_LEGALCOPYRIGHT_STR      "Steam Homebrew 2025\0"
 #define VER_LEGALTRADEMARKS1_STR    "All Rights Reserved\0"
 #define VER_LEGALTRADEMARKS2_STR    "\0"
-#define VER_PRODUCTNAME_STR         "Starlight\0"
+#define VER_PRODUCTNAME_STR         "Millennium Installer\0"
 
 #ifndef DEBUG
 #define VER_DEBUG                   0

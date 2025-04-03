@@ -16,6 +16,8 @@
 #include <task_scheduler.h>
 #include <unzip.h>
 #include <atomic>
+#include <windows.h>
+#include <tlhelp32.h>
 
 using namespace ImGui;
 using namespace ImSpinner;
@@ -85,8 +87,89 @@ void OnFinishInstall()
     hasTaskSchedulerFinished.store(true);
 }
 
+std::string g_steamPath;
+
+void StartSteamFromPath()
+{
+    std::string steamExePath = (std::filesystem::path(g_steamPath) / "steam.exe").string();
+
+    STARTUPINFO si = {0};
+    PROCESS_INFORMATION pi = {0};
+
+    si.cb = sizeof(si);
+
+    char cmd[MAX_PATH];
+    strcpy_s(cmd, steamExePath.c_str());
+
+    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) 
+    {
+        ShowMessageBox("Whoops!", fmt::format("Failed to start Steam. Please check your installation path. Error code: {}", GetLastError()), Error);
+        return;
+    }
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    std::exit(0);
+}
+
+bool KillSteamProcess()
+{
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+    if (hSnapshot == INVALID_HANDLE_VALUE) 
+    {
+        std::cerr << "Failed to create snapshot. Error: " << GetLastError() << std::endl;
+        return false;
+    }
+
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hSnapshot, &pe)) 
+    {
+        do 
+        {
+            if (_stricmp(pe.szExeFile, "steam.exe") == 0) 
+            { 
+                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
+                if (hProcess)
+                {
+                    if (TerminateProcess(hProcess, 0)) 
+                    {
+                        CloseHandle(hProcess);
+                        CloseHandle(hSnapshot);
+                        return true;
+                    } 
+                    else 
+                    {
+                        ShowMessageBox("Whoops!", fmt::format("Failed to terminate process. Error: {}", GetLastError()), Error);
+                    }
+                    CloseHandle(hProcess);
+                } 
+                else 
+                {
+                    ShowMessageBox("Whoops!", fmt::format("Failed to open process. Error: {}", GetLastError()), Error);
+                }
+            }
+        } 
+        while (Process32Next(hSnapshot, &pe));
+    } 
+    else 
+    {
+        ShowMessageBox("Whoops!", fmt::format("Failed to retrieve process list. Error: {}", GetLastError()), Error);
+    }
+
+    CloseHandle(hSnapshot);
+    return false;
+}
+
 void StartInstaller(std::string steamPath, nlohmann::json& releaseInfo, nlohmann::json& osReleaseInfo)
 {
+    KillSteamProcess();
+
+    g_steamPath = steamPath;
+
     progress = 0.0f;
     easedProgress = 0.0f;
     targetProgress = 0.0f;
@@ -240,6 +323,7 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
         if (Button("Finish", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
         {
             // routerPtr->goInstaller();
+            std::thread(StartSteamFromPath).detach();
         }
 
         if (isButtonHovered)

@@ -13,7 +13,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos);
 const void RenderBottomNavBar(const char* identifier, float xPos, std::function<void()> buttonRenderCallback);
 
 void StartInstaller(std::string steamPath, nlohmann::json& releaseInfo, nlohmann::json& osReleaseInfo);
-void StartUninstaller();
+void InitializeUninstaller();
 const bool FetchVersionInfo();
 
 enum MessageLevel {

@@ -4,3 +4,6 @@
 [submodule "vendor/nlohmann"]
 	path = vendor/nlohmann
 	url = https://github.com/nlohmann/json
+[submodule "vendor/ini"]
+	path = vendor/ini
+	url = https://github.com/metayeti/mINI.git

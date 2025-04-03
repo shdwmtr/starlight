@@ -15,21 +15,20 @@ void RenderImGui(GLFWwindow* window, std::shared_ptr<RouterNav> router)
 
     ImGuiViewport* viewport = GetMainViewport();
     {
-        SetNextWindowPos (viewport->Pos);
+        SetNextWindowPos (viewport->Pos );
         SetNextWindowSize(viewport->Size);
 
         PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        Begin("Millennium", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar); 
+        Begin("Millennium", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse); 
         PopStyleVar();
 
         isTitleBarHovered = RenderTitleBarComponent(router);
         router->update(); 
 
-        Component currentPanel       = router->getCurrentComponent();
-        Component transitioningPanel = router->getTransitioningComponent();
-
-        float xOffsetCurrent       = router->getCurrentOffset(viewport->Size.x);
-        float xOffsetTransitioning = router->getTransitioningOffset(viewport->Size.x);
+        auto currentPanel         = router->getCurrentComponent();
+        auto transitioningPanel   = router->getTransitioningComponent();
+        auto xOffsetCurrent       = router->getCurrentOffset(viewport->Size.x);
+        auto xOffsetTransitioning = router->getTransitioningOffset(viewport->Size.x);
 
         if (transitioningPanel) 
         {
@@ -38,21 +37,18 @@ void RenderImGui(GLFWwindow* window, std::shared_ptr<RouterNav> router)
             PopID();
         }
 
-        ImGui::SameLine();
-        PushID("CurrentPanel");
+        SameLine();
         currentPanel(router, xOffsetCurrent);
-        PopID();
 
-        if (ImGui::IsKeyPressed(ImGuiKey_MouseX1))
+        if (IsKeyPressed(ImGuiKey_MouseX1))
         {
             if (router->canGoBack()) router->navigateBack();
         }
-        if (ImGui::IsKeyPressed(ImGuiKey_MouseX2))
+        if (IsKeyPressed(ImGuiKey_MouseX2))
         {
             if (router->canGoForward()) router->navigateNext();
         }
         End();
-
         RenderMessageBoxes();
     }
     Render();
