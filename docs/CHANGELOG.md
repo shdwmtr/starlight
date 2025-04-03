@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/shdwmtr/starlight/compare/v1.0.3...v1.0.4) (2025-04-03)
+
+
+### Bug Fixes
+
+* Reduce CPU usage. ([9f03175](https://github.com/shdwmtr/starlight/commit/9f031757221e3e41478ed555d77190e9139259ab))
+
 ## [1.0.3](https://github.com/shdwmtr/starlight/compare/v1.0.2...v1.0.3) (2025-04-03)
 
 
