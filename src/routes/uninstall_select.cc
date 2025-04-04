@@ -49,9 +49,8 @@
 
 using namespace ImGui;
 using namespace ImSpinner;
-namespace fs = std::filesystem;
 
-static std::filesystem::path steamPath = "C:\\Program Files (x86)\\Steam";
+static std::filesystem::path steamPath;
 
 struct ComponentProps
 {
@@ -85,52 +84,7 @@ struct ComponentState
     ComponentState(bool hovered = false, bool selected = false) : isHovered(hovered), isSelected(selected) {}
 };
 
-uint64_t GetFolderSize(const fs::path& path, std::error_code& ec)
-{
-    if (!fs::exists(path, ec)) 
-    {
-        return 0;
-    }
-    
-    std::error_code file_ec;
-    auto metadata = fs::status(path, file_ec);
-    if (file_ec) 
-    {
-        return 0;
-    }
-    
-    if (fs::is_regular_file(metadata))
-    {
-        return fs::file_size(path, file_ec);
-    }
-    
-    uint64_t size = 0;
-    for (const auto& entry : fs::directory_iterator(path, fs::directory_options::skip_permission_denied, ec))
-    {
-        if (ec) 
-        {
-            continue;
-        }
-        
-        auto entry_metadata = fs::status(entry, file_ec);
-        if (file_ec) 
-        {
-            continue;
-        }
-        
-        if (fs::is_directory(entry_metadata))
-        {
-            size += GetFolderSize(entry.path(), ec);
-        }
-        else if (fs::is_regular_file(entry_metadata))
-        {
-            size += fs::file_size(entry, file_ec);
-        }
-    }
-    return size;
-}
-
-ComponentProps MakeComponentProps(std::vector<fs::path> pathList)
+ComponentProps MakeComponentProps(std::vector<std::filesystem::path> pathList)
 {
     uint64_t byteSize = 0;
 
@@ -154,6 +108,8 @@ std::vector<std::pair<std::string, std::tuple<ComponentState, ComponentProps>>> 
 
 void InitializeUninstaller()
 {
+    steamPath = GetSteamPath();
+
     isUninstalling = false;
     uninstallFinished = false;
 
@@ -170,7 +126,8 @@ void InitializeUninstaller()
 void StartUninstall()
 {
     /** Render all selected components as uninstalling */
-    std::for_each(uninstallComponents.begin(), uninstallComponents.end(), [](auto& pair) {
+    std::for_each(uninstallComponents.begin(), uninstallComponents.end(), [](auto& pair) 
+    {
         if (std::get<0>(pair.second).isSelected) std::get<0>(pair.second).uninstallState.state = ComponentState::UninstallState::Uninstalling;
     });
     
@@ -185,7 +142,7 @@ void StartUninstall()
             for (const auto& path : props.pathList)
             {
                 std::error_code ec;
-                fs::remove_all(path, ec); // Remove the path
+                std::filesystem::remove_all(path, ec); // Remove the path
                 if (ec) 
                 {
                     state.uninstallState.state = ComponentState::UninstallState::Failed;
@@ -233,7 +190,7 @@ const void RenderComponents()
 
         std::string formattedComponent = component + ": " + BytesToReadableFormat(props.byteSize);
 
-        BeginChild(component.c_str(), ImVec2(ScaleX(35), ScaleY(35)), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        BeginChild(component.c_str(), { ScaleX(35), ScaleY(35) }, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         { 
             /** Not currently uninstalling, the user is selecting components to be uninstalled */
             if (!isUninstalling)
@@ -245,8 +202,8 @@ const void RenderComponents()
             /** Item is excluded from the uninstaller */
             if (!state.isSelected)
             {
-                SetCursorPos(ImVec2(GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2)));
-                Image((ImTextureID)(intptr_t)excludedIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
+                SetCursorPos({ GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2) });
+                Image((ImTextureID)(intptr_t)excludedIconTexture, { ScaleX(30), ScaleY(30) });
                 EndChild();
 
                 if (IsItemHovered())
@@ -274,7 +231,7 @@ const void RenderComponents()
             {
                 case ComponentState::UninstallState::Uninstalling:
                 {
-                    SetCursorPos(ImVec2(GetCursorPosX() + spinnerSize / 2, (GetCursorPosY() + spinnerSize / 2) - 5.f));
+                    SetCursorPos({ GetCursorPosX() + spinnerSize / 2, (GetCursorPosY() + spinnerSize / 2) - 5.f });
                     Spinner<SpinnerTypeT::e_st_ang>("SpinnerAngNoBg", Radius{(spinnerSize)}, Thickness{(ScaleX(3))}, Color{ImColor(255, 255, 255, 255)}, BgColor{ImColor(255, 255, 255, 0)}, Speed{6}, Angle{IM_PI}, Mode{0});
                     EndChild();
                     SameLine(0, ScaleX(20));
@@ -284,8 +241,8 @@ const void RenderComponents()
                 }
                 case ComponentState::UninstallState::Success:
                 {
-                    SetCursorPos(ImVec2(GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2)));
-                    Image((ImTextureID)(intptr_t)successIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
+                    SetCursorPos({ GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2)} );
+                    Image((ImTextureID)(intptr_t)successIconTexture, { ScaleX(30), ScaleY(30) });
                     EndChild();
 
                     SameLine(0, ScaleX(20));
@@ -296,7 +253,7 @@ const void RenderComponents()
                 }
                 case ComponentState::UninstallState::Failed:
                 {
-                    SetCursorPos(ImVec2(GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2)));
+                    SetCursorPos({ GetCursorPosX() + ScaleX(2), GetCursorPosY() + ScaleY(2) });
                     Image((ImTextureID)(intptr_t)errorIconTexture, ImVec2(ScaleX(30), ScaleY(30)));
                     EndChild();
 
@@ -347,11 +304,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
 
     static auto animationStartTime = std::chrono::steady_clock::now();
 
-    SetCursorPos(ImVec2(
-        xPos + (viewport->Size.x - PromptContainerWidth) / 2, 
-        (viewport->Size.y - PromptContainerHeight) / 2
-    ));
-
+    SetCursorPos({ xPos + (viewport->Size.x - PromptContainerWidth) / 2, (viewport->Size.y - PromptContainerHeight) / 2 });
     PushStyleColor(ImGuiCol_Border, ImVec4(0.169f, 0.173f, 0.18f, 1.0f));
 
     BeginChild("##PromptContainer", ImVec2(PromptContainerWidth, PromptContainerHeight), false);
@@ -379,7 +332,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
     EndChild();
     PopStyleColor();
 
-    SetCursorPos(ImVec2(xPos, viewport->Size.y - BottomNavBarHeight + 1));
+    SetCursorPos({ xPos, viewport->Size.y - BottomNavBarHeight + 1 });
 
     PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30)));
     PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
@@ -388,7 +341,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
 
     BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
-        SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
+        SetCursorPos({ ScaleX(45), GetCursorPosY() + ScaleY(12.5) });
         Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));
 
         SameLine(0, ScaleX(42));
@@ -397,7 +350,7 @@ const void RenderUninstallSelect(std::shared_ptr<RouterNav> router, float xPos)
         SetCursorPosY(GetCursorPosY() - ScaleX(12));
         TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam Homebrew & Millennium are not affiliated with");
 
-        SetCursorPos(ImVec2(cursorPosSave, GetCursorPosY() - ScaleY(20)));
+        SetCursorPos({ cursorPosSave, GetCursorPosY() - ScaleY(20) });
         TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam®, Valve, or any of their partners.");
         
         SameLine(0);

@@ -56,121 +56,8 @@ using namespace ImGui;
 const CheckBoxState* checkForUpdates;
 const CheckBoxState* automaticallyInstallUpdates;
 
-std::string OpenFolderDialog()
-{
-    const auto WStringToString = [](const std::wstring& wstr) -> std::string {
-        if (wstr.empty()) return {};
-
-        size_t size_needed = std::wcstombs(nullptr, wstr.c_str(), 0) + 1;
-        std::string str(size_needed, 0);
-        std::wcstombs(&str[0], wstr.c_str(), size_needed);
-        str.pop_back(); 
-        return str;
-    };
-
-    if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
-    {
-        return {};
-    }
-
-    IFileOpenDialog* pFileOpen = nullptr;
-    if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen))))
-    {
-        CoUninitialize();
-        return {};
-    }
-
-    unsigned long options;
-    if (SUCCEEDED(pFileOpen->GetOptions(&options)))
-    {
-        pFileOpen->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
-    }
-
-    if (FAILED(pFileOpen->Show(nullptr)))
-    {
-        pFileOpen->Release();
-        CoUninitialize();
-        return {};
-    }
-
-    IShellItem* pItem = nullptr;
-    if (FAILED(pFileOpen->GetResult(&pItem)))
-    {
-        pFileOpen->Release();
-        CoUninitialize();
-        return {};
-    }
-
-    wchar_t* folderPath = nullptr;
-    std::string result;
-    if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &folderPath)))
-    {
-        if (folderPath)
-        {
-            result = WStringToString(folderPath);
-            CoTaskMemFree(folderPath);
-        }
-    }
-
-    pItem->Release();
-    pFileOpen->Release();
-    CoUninitialize();
-
-    return result;
-}
-
-std::optional<std::string> SelectNewSteamPath()
-{
-    const auto steamPath = std::filesystem::path(OpenFolderDialog());
-
-    if (steamPath.empty())
-    {
-        return {};
-    }
-
-    if (!std::filesystem::exists(steamPath / "steam.exe"))
-    {
-        MessageBoxA(nullptr, "Invalid Steam path selected", "Error", MB_ICONERROR);
-        return {};
-    }
-
-    return steamPath.string();
-}
-
+static ImGui::MarkdownConfig mdConfig; 
 nlohmann::json releaseInfo, osReleaseInfo;
-
-std::string ToTimeAgo(const std::string& isoTimestamp) 
-{
-    std::tm tm = {};
-    std::istringstream ss(isoTimestamp);
-    ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ"); // UTC time format
-
-    if (ss.fail()) 
-    {
-        return "Invalid timestamp";
-    }
-
-    // Convert to time_point
-    std::time_t inputTime = std::mktime(&tm);
-    auto inputTimePoint = std::chrono::system_clock::from_time_t(inputTime);
-    auto now = std::chrono::system_clock::now();
-
-    // Calculate difference in seconds
-    auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - inputTimePoint).count();
-
-    // Helper lambda to handle singular/plural formatting
-    auto formatTime = [](long count, const char* unit) 
-    {
-        return fmt::format("{} {}{}", count, unit, (count == 1 ? "" : "s"));
-    };
-
-    if (diff < 60)       return "just now";
-    if (diff < 3600)     return formatTime(diff / 60, "minute") + " ago";
-    if (diff < 86400)    return formatTime(diff / 3600, "hour") + " ago";
-    if (diff < 2592000)  return formatTime(diff / 86400, "day") + " ago";
-    if (diff < 31536000) return fmt::format("about {} ago", formatTime(diff / 2592000, "month"));
-    return fmt::format("about {} ago", formatTime(diff / 31536000, "year"));
-}
 
 const bool FetchVersionInfo()
 {
@@ -187,15 +74,12 @@ const bool FetchVersionInfo()
     try 
     {
         releaseInfo = nlohmann::json::parse(response);
-
-        // Filter and find first release that isn't a pre-release
+        // Find the latest non-prerelease version
         for (const auto& release : releaseInfo)
         {
-            if (!release["prerelease"].get<bool>())
+            if (release.contains("prerelease") && release["prerelease"].is_boolean() && release["prerelease"].get<bool>())
             {
                 releaseInfo = release;
-    
-                // Fetch OS release info
                 for (const auto& asset : releaseInfo["assets"])
                 {
                     std::string assetName  = asset["name"];
@@ -223,25 +107,20 @@ const bool FetchVersionInfo()
         ShowMessageBox("Whoops!", "Failed to parse version information from the GitHub API! Please wait a moment and try again, you're likely rate limited.", Error);
         return false;
     }
+
     return hasFoundReleaseInfo;
 }
 
-void LinkCallback( ImGui::MarkdownLinkCallbackData data_ );
-inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData data_ );
-
-static ImGui::MarkdownConfig mdConfig; 
-
-
-void LinkCallback( ImGui::MarkdownLinkCallbackData data_ )
+void LinkCallback(ImGui::MarkdownLinkCallbackData data_)
 {
-    std::string url( data_.link, data_.linkLength );
-    if( !data_.isImage )
+    std::string url(data_.link, data_.linkLength);
+    if (!data_.isImage)
     {
-        ShellExecuteA( NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL );
+        ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
     }
 }
 
-inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData data_ )
+inline ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData data_)
 {
     // In your application you would load an image based on data_ input. Here we just use the imgui font texture.
     ImTextureID image = ImGui::GetIO().Fonts->TexID;
@@ -254,7 +133,7 @@ inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData d
 
     // For image resize when available size.x > image width, add
     ImVec2 const contentSize = ImGui::GetContentRegionAvail();
-    if( imageData.size.x > contentSize.x )
+    if(imageData.size.x > contentSize.x)
     {
         float const ratio = imageData.size.y/imageData.size.x;
         imageData.size.x = contentSize.x;
@@ -264,7 +143,7 @@ inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData d
     return imageData;
 }
 
-void ExampleMarkdownFormatCallback(const MarkdownFormatInfo& markdownFormatInfo_, bool start_)
+void MarkdownFormatCallback(const MarkdownFormatInfo& markdownFormatInfo_, bool start_)
 {
     defaultMarkdownFormatCallback(markdownFormatInfo_, start_);        
        
@@ -272,30 +151,17 @@ void ExampleMarkdownFormatCallback(const MarkdownFormatInfo& markdownFormatInfo_
     {
         case MarkdownFormatType::HEADING:
         {
-            if(start_)
-            {
-                PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
-            }
-            else
-            {
-                PopStyleColor();
-            }
+            if(start_) PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
+            else       PopStyleColor();
             break;
         }
 
         case MarkdownFormatType::LINK:
         {
-            if(start_)
-            {
-                PushStyleColor(ImGuiCol_Text, ImVec4(0.408f, 0.525f, 0.91f, 1.0f));
-            }
+            if(start_) PushStyleColor(ImGuiCol_Text, ImVec4(0.408f, 0.525f, 0.91f, 1.0f));    
             else
             {
-                if (IsItemHovered())
-                {
-                    SetMouseCursor(ImGuiMouseCursor_Hand);
-                }
-
+                if (IsItemHovered()) { SetMouseCursor(ImGuiMouseCursor_Hand); }
                 PopStyleColor();
             }
             break;
@@ -303,16 +169,20 @@ void ExampleMarkdownFormatCallback(const MarkdownFormatInfo& markdownFormatInfo_
     }
 }
 
-void replaceNewlines(std::string& str) {
+void replaceNewlines(std::string& str) 
+{
     size_t pos = 0;
-    while ((pos = str.find("\n\n", pos)) != std::string::npos) {
+    while ((pos = str.find("\n\n", pos)) != std::string::npos) 
+    {
         str.replace(pos, 2, "\n");
     }
 }
 
-void removeFirstLine(std::string& str) {
+void removeFirstLine(std::string& str) 
+{
     size_t pos = str.find("\n\n\n");
-    if (pos != std::string::npos) {
+    if (pos != std::string::npos) 
+    {
         str.erase(0, pos + 1); 
     }
 }
@@ -322,26 +192,18 @@ void Markdown(std::string markdown_)
     removeFirstLine(markdown_);
     replaceNewlines(markdown_);
 
-    static bool hasLogged = false;
-
-    if (!hasLogged)
-    {
-        std::cout << "Markdown: " << markdown_ << std::endl;
-        hasLogged = true;
-    }
-
     ImGuiIO& io = GetIO();
-    // You can make your own Markdown function with your prefered string container and markdown config.
-    // > C++14 can use ImGui::MarkdownConfig mdConfig{ LinkCallback, NULL, ImageCallback, ICON_FA_LINK, { { H1, true }, { H2, true }, { H3, false } }, NULL };
-    mdConfig.linkCallback =         LinkCallback;
-    mdConfig.tooltipCallback =      NULL;
-    mdConfig.imageCallback =        ImageCallback;
-    mdConfig.headingFormats[0] =    { io.Fonts->Fonts[1], true };
-    mdConfig.headingFormats[1] =    { io.Fonts->Fonts[1], true };
-    mdConfig.headingFormats[2] =    { io.Fonts->Fonts[1], false };
-    mdConfig.userData =             NULL;
-    mdConfig.formatCallback =       ExampleMarkdownFormatCallback;
-    ImGui::Markdown( markdown_.c_str(), markdown_.length(), mdConfig );
+   
+    mdConfig.linkCallback      = LinkCallback;
+    mdConfig.tooltipCallback   = NULL;
+    mdConfig.imageCallback     = ImageCallback;
+    mdConfig.headingFormats[0] = { io.Fonts->Fonts[1], true  };
+    mdConfig.headingFormats[1] = { io.Fonts->Fonts[1], true  };
+    mdConfig.headingFormats[2] = { io.Fonts->Fonts[1], false };
+    mdConfig.userData          = NULL;
+    mdConfig.formatCallback    = MarkdownFormatCallback;
+
+    ImGui::Markdown(markdown_.c_str(), markdown_.length(), mdConfig);
 }
 
 void SetUserSettings(std::string steamPath)
@@ -390,15 +252,11 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
     float targetY = viewport->Size.y - BottomNavBarHeight; 
     
     static float currentY = startY;
-    static bool animate   = true;
+    static bool  animate  = true;
 
     static auto animationStartTime = std::chrono::steady_clock::now();
 
-    SetCursorPos(ImVec2(
-        xPos + (viewport->Size.x - PromptContainerWidth) / 2, 
-        (viewport->Size.y - PromptContainerHeight) / 2
-    ));
-
+    SetCursorPos({ xPos + (viewport->Size.x - PromptContainerWidth) / 2, (viewport->Size.y - PromptContainerHeight) / 2 });
     PushStyleColor(ImGuiCol_Border, ImVec4(0.169f, 0.173f, 0.18f, 1.0f));
 
     BeginChild("##PromptContainer", ImVec2(PromptContainerWidth, PromptContainerHeight), false);
@@ -488,7 +346,6 @@ const void RenderInstallPrompt(std::shared_ptr<RouterNav> router, float xPos)
 
         Spacing();
         Separator();
-
         Spacing();
         Spacing();
 

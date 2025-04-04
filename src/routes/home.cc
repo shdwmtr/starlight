@@ -200,10 +200,11 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
 
     PushStyleColor(ImGuiCol_Border, ImVec4(0.169f, 0.173f, 0.18f, 1.0f));
     
-    SetCursorPos(ImVec2(
+    SetCursorPos
+    ({
         xPos + (viewport->Size.x - ((ContainerWidth * 2) + ContainerSpacing)) / 2,
         ((viewport->Size.y - BottomNavBarHeight) / 2.0f) - ContainerHeight / 2
-    ));
+    });
 
     RenderOption({ "Install", "Integrate Millennium into your Steam® Client.", INSTALL }, ContainerWidth, ContainerHeight, ContainerSpacing);
     RenderOption({ "Remove" , "Selectively uninstall portions of Millennium.", REMOVE  }, ContainerWidth, ContainerHeight, ContainerSpacing);
@@ -211,7 +212,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
     PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
 
     /** Animate the footer bar into view */
-    SetCursorPos(ImVec2(xPos, PollAnimationFrames(BottomNavBarHeight, viewport->Size.y)));
+    SetCursorPos({ xPos, PollAnimationFrames(BottomNavBarHeight, viewport->Size.y) });
 
     PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30)));
     PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
@@ -247,10 +248,10 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
             const float childWidth  = GetContentRegionAvail().x;
             const float childHeight = GetContentRegionAvail().y;
 
-            BeginChild("##ButtonIsBusy", ImVec2(xPos + childWidth, childHeight), true, ImGuiWindowFlags_NoScrollbar);
+            BeginChild("##ButtonIsBusy", { xPos + childWidth, childHeight }, true, ImGuiWindowFlags_NoScrollbar);
             {
                 const float spinnerSize = ScaleX(12.f);
-                SetCursorPos(ImVec2(childWidth / 2 - spinnerSize, spinnerSize));
+                SetCursorPos({ childWidth / 2 - spinnerSize, spinnerSize });
 
                 Spinner<SpinnerTypeT::e_st_ang>("SpinnerAngNoBg", Radius{spinnerSize}, Thickness{ScaleX(2)}, Color{ImColor(0, 0, 0, 255)}, BgColor{ImColor(255, 255, 255, 0)}, Speed{6}, Angle{IM_PI}, Mode{0});
             }
@@ -258,7 +259,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
             PopStyleColor();
             PopStyleVar();
         }
-        else if (Button("Next", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
+        else if (Button("Next", { xPos + GetContentRegionAvail().x, GetContentRegionAvail().y }))
         {
             switch (currentOption)
             {
@@ -327,7 +328,7 @@ const void RenderHome(std::shared_ptr<RouterNav> router, float xPos)
 
         if (toolTipOpacity != 0.f)
         {
-            SetNextWindowPos(ImVec2((viewport->Size.x - tooltipWidth) / 2, viewport->Size.y - ScaleY(220)));
+            SetNextWindowPos({ (viewport->Size.x - tooltipWidth) / 2, viewport->Size.y - ScaleY(220) });
 
             PushStyleColor( ImGuiCol_Border,  ImVec4(0.18f,  0.184f, 0.192f, 1.0f));
             PushStyleColor( ImGuiCol_Text,    ImVec4(0.422f, 0.425f, 0.441f, 1.0f));

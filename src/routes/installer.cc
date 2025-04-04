@@ -119,81 +119,6 @@ void OnFinishInstall()
 
 std::string g_steamPath;
 
-void StartSteamFromPath()
-{
-    std::string steamExePath = (std::filesystem::path(g_steamPath) / "steam.exe").string();
-
-    STARTUPINFO si = {0};
-    PROCESS_INFORMATION pi = {0};
-
-    si.cb = sizeof(si);
-
-    char cmd[MAX_PATH];
-    strcpy_s(cmd, steamExePath.c_str());
-
-    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) 
-    {
-        ShowMessageBox("Whoops!", fmt::format("Failed to start Steam. Please check your installation path. Error code: {}", GetLastError()), Error);
-        return;
-    }
-
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    std::exit(0);
-}
-
-bool KillSteamProcess()
-{
-    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-    if (hSnapshot == INVALID_HANDLE_VALUE) 
-    {
-        std::cerr << "Failed to create snapshot. Error: " << GetLastError() << std::endl;
-        return false;
-    }
-
-    PROCESSENTRY32 pe;
-    pe.dwSize = sizeof(PROCESSENTRY32);
-
-    if (Process32First(hSnapshot, &pe)) 
-    {
-        do 
-        {
-            if (_stricmp(pe.szExeFile, "steam.exe") == 0) 
-            { 
-                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
-                if (hProcess)
-                {
-                    if (TerminateProcess(hProcess, 0)) 
-                    {
-                        CloseHandle(hProcess);
-                        CloseHandle(hSnapshot);
-                        return true;
-                    } 
-                    else 
-                    {
-                        ShowMessageBox("Whoops!", fmt::format("Failed to terminate process. Error: {}", GetLastError()), Error);
-                    }
-                    CloseHandle(hProcess);
-                } 
-                else 
-                {
-                    ShowMessageBox("Whoops!", fmt::format("Failed to open process. Error: {}", GetLastError()), Error);
-                }
-            }
-        } 
-        while (Process32Next(hSnapshot, &pe));
-    } 
-    else 
-    {
-        ShowMessageBox("Whoops!", fmt::format("Failed to retrieve process list. Error: {}", GetLastError()), Error);
-    }
-
-    CloseHandle(hSnapshot);
-    return false;
-}
-
 void StartInstaller(std::string steamPath, nlohmann::json& releaseInfo, nlohmann::json& osReleaseInfo)
 {
     KillSteamProcess();
@@ -237,16 +162,16 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
     if (!shouldRenderCompleteModal)
     {
         // router->setCanGoBack(true);
-        SetCursorPos(ImVec2(xPos + (viewport->Size.x / 2) - spinnerSize, (viewport->Size.y / 2) - 50));
+        SetCursorPos({ xPos + (viewport->Size.x / 2) - spinnerSize, (viewport->Size.y / 2) - 50 });
         {
             Spinner<SpinnerTypeT::e_st_ang>("SpinnerAngNoBg", Radius{spinnerSize}, Thickness{ScaleX(3)}, Color{ImColor(255, 255, 255, 255)}, BgColor{ImColor(255, 255, 255, 0)}, Speed{6}, Angle{IM_PI}, Mode{0});
         }
-        SetCursorPos(ImVec2(xPos + ((viewport->Size.x - progressBarWidth) / 2), viewport->Size.y / 2 + ScaleY(60)));
+        SetCursorPos({ xPos + ((viewport->Size.x - progressBarWidth) / 2), viewport->Size.y / 2 + ScaleY(60) });
         {
-            ProgressBar(easedProgress, ImVec2(progressBarWidth, ScaleY(4.0f)), "##ProgressBar");
+            ProgressBar(easedProgress, { progressBarWidth, ScaleY(4.0f) }, "##ProgressBar");
         }
 
-        SetCursorPos(ImVec2(xPos + (viewport->Size.x) / 2 - (CalcTextSize(statusText.c_str()).x / 2), viewport->Size.y / 2 + ScaleY(15)));
+        SetCursorPos({ xPos + (viewport->Size.x) / 2 - (CalcTextSize(statusText.c_str()).x / 2), viewport->Size.y / 2 + ScaleY(15) });
         Text(statusText.c_str());
     }
     else
@@ -256,17 +181,17 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
         const char* subDescription = "View Documentation 🔗";
 
         PushFont(io.Fonts->Fonts[1]);
-        SetCursorPos(ImVec2(xPos + (viewport->Size.x) / 2 - (CalcTextSize(text).x / 2), viewport->Size.y / 2 - ScaleY(55)));
+        SetCursorPos({ xPos + (viewport->Size.x) / 2 - (CalcTextSize(text).x / 2), viewport->Size.y / 2 - ScaleY(55) });
         Text(text);
         PopFont();
 
         PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-        SetCursorPos(ImVec2(xPos + (viewport->Size.x) / 2 - (CalcTextSize(description).x / 2), viewport->Size.y / 2 - ScaleY(15)));
+        SetCursorPos({ xPos + (viewport->Size.x) / 2 - (CalcTextSize(description).x / 2), viewport->Size.y / 2 - ScaleY(15) });
         Text(description);
         PopStyleColor();
 
         PushStyleColor(ImGuiCol_Text, ImVec4(0.408f, 0.525f, 0.91f, 1.0f));
-        SetCursorPos(ImVec2(xPos + (viewport->Size.x) / 2 - (CalcTextSize(subDescription).x / 2), viewport->Size.y / 2 + ScaleY(20)));
+        SetCursorPos({ xPos + (viewport->Size.x) / 2 - (CalcTextSize(subDescription).x / 2), viewport->Size.y / 2 + ScaleY(20) });
         Text(subDescription);
         PopStyleColor();
 
@@ -313,17 +238,17 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
         return;
     }
 
-    SetCursorPos(ImVec2(xPos, currentY));
+    SetCursorPos({ xPos, currentY });
 
     PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30))     );
     PushStyleColor(ImGuiCol_Border,             ImVec4(0.f, 0.f, 0.f, 0.f)         );
     PushStyleVar  (ImGuiStyleVar_ChildRounding, 0.0f                               );
     PushStyleColor(ImGuiCol_ChildBg,            ImVec4(0.078f, 0.082f, 0.09f, 1.0f));
 
-    BeginChild("##BottomNavBar", ImVec2(viewport->Size.x, BottomNavBarHeight - 3), true, ImGuiWindowFlags_NoScrollbar);
+    BeginChild("##BottomNavBar", { viewport->Size.x, BottomNavBarHeight - 3 }, true, ImGuiWindowFlags_NoScrollbar);
     {
-        SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
-        Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));
+        SetCursorPos({ ScaleX(45), GetCursorPosY() + ScaleY(12.5) });
+        Image((ImTextureID)(intptr_t)infoIconTexture, { ScaleX(25), ScaleY(25) });
 
         SameLine(0, ScaleX(42));
         const float cursorPosSave = GetCursorPosX();
@@ -331,7 +256,7 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
         SetCursorPosY(GetCursorPosY() - ScaleY(12));
         TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam Homebrew & Millennium are not affiliated with");
 
-        SetCursorPos(ImVec2(cursorPosSave, GetCursorPosY() - ScaleY(20)));
+        SetCursorPos({ cursorPosSave, GetCursorPosY() - ScaleY(20) });
         TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam®, Valve, or any of their partners.");
         
         SameLine(0);
@@ -350,10 +275,9 @@ const void RenderInstaller(std::shared_ptr<RouterNav> router, float xPos)
 
         SetCursorPosX(xPos + GetCursorPosX() + GetContentRegionAvail().x - ButtonWidth);
 
-        if (Button("Finish", ImVec2(xPos + GetContentRegionAvail().x, GetContentRegionAvail().y)))
+        if (Button("Finish", { xPos + GetContentRegionAvail().x, GetContentRegionAvail().y} ))
         {
-            // routerPtr->goInstaller();
-            std::thread(StartSteamFromPath).detach();
+            std::thread(StartSteamFromPath, g_steamPath).detach();
         }
 
         if (isButtonHovered)

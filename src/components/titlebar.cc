@@ -56,15 +56,15 @@ bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
         float titlePadding   = ScaleX(20);
         float backButtonPos  = ScaleX(EaseInOutFloat("##TitleBarBackButton", 0.f, 45, !router->canGoBack(), 0.3f));
 
-        SetCursorPos(ImVec2(ScaleX(5) - backButtonPos, ScaleX(5)));
+        SetCursorPos({ ScaleX(5) - backButtonPos, ScaleX(5) });
 
-        ImVec2 backButtonDim = ImVec2(ScaleX(45), ScaleY(43));
+        ImVec2 backButtonDim = { ScaleX(45), ScaleY(43) };
 
         PushStyleVar(ImGuiStyleVar_ChildRounding, ScaleX(6));
         BeginChild("##BackButtonChild", ImVec2(backButtonDim.x, backButtonDim.y), true, ImGuiWindowFlags_NoScrollbar);
         {
-            SetCursorPos(ImVec2(ScaleX(13), ScaleY(11)));
-            Image((ImTextureID)(intptr_t)backBtnTexture, ImVec2(iconDimension, iconDimension));
+            SetCursorPos({ ScaleX(13), ScaleY(11) });
+            Image((ImTextureID)(intptr_t)backBtnTexture, { iconDimension, iconDimension });
         }
         PopStyleVar();
         EndChild();
@@ -96,14 +96,14 @@ bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
             PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.769f, 0.169f, 0.11f, 1.0f));
         }
 
-        ImVec2 closeButtonDimensions = ImVec2(ceil(ScaleX(70)), ceil(ScaleY(43)));
-        SetCursorPos(ImVec2(viewport->Size.x - closeButtonDimensions.x, 0));
+        ImVec2 closeButtonDimensions = { ceil(ScaleX(70)), ceil(ScaleY(43)) };
+        SetCursorPos({ viewport->Size.x - closeButtonDimensions.x, 0 });
 
         PushStyleVar(ImGuiStyleVar_ChildRounding, 0);
-        BeginChild("##CloseButton", ImVec2(closeButtonDimensions.x, closeButtonDimensions.y), true, ImGuiWindowFlags_NoScrollbar);
+        BeginChild("##CloseButton", { closeButtonDimensions.x, closeButtonDimensions.y }, true, ImGuiWindowFlags_NoScrollbar);
         {
-            SetCursorPos(ImVec2(ScaleX(25), ScaleY(12)));
-            Image((ImTextureID)(intptr_t)closeButtonTexture, ImVec2(closeButtonDim, closeButtonDim));
+            SetCursorPos({ ScaleX(25), ScaleY(12) });
+            Image((ImTextureID)(intptr_t)closeButtonTexture, { closeButtonDim, closeButtonDim });
         }
         PopStyleVar();
         EndChild();

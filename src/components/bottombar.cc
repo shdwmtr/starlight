@@ -52,7 +52,7 @@ const void RenderBottomNavBar(const char* identifier, float xPos, std::function<
     const float BottomNavBarHeight = ScaleY(115);
     const int FooterContainerWidth = ScaleX(300);
 
-    SetCursorPos(ImVec2(xPos, viewport->Size.y - BottomNavBarHeight + 1));
+    SetCursorPos({ xPos, viewport->Size.y - BottomNavBarHeight + 1 });
 
     PushStyleVar  (ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(30), ScaleY(30))     );
     PushStyleColor(ImGuiCol_Border,             ImVec4(0.f, 0.f, 0.f, 0.f)         );
@@ -61,7 +61,7 @@ const void RenderBottomNavBar(const char* identifier, float xPos, std::function<
 
     BeginChild(fmt::format("##BottomNavBar{}", identifier).c_str(), ImVec2(viewport->Size.x, BottomNavBarHeight), true, ImGuiWindowFlags_NoScrollbar);
     {
-        SetCursorPos(ImVec2(ScaleX(45), GetCursorPosY() + ScaleY(12.5)));
+        SetCursorPos({ ScaleX(45), GetCursorPosY() + ScaleY(12.5) });
         Image((ImTextureID)(intptr_t)infoIconTexture, ImVec2(ScaleX(25), ScaleY(25)));
 
         SameLine(0, ScaleX(42));
@@ -70,7 +70,7 @@ const void RenderBottomNavBar(const char* identifier, float xPos, std::function<
         SetCursorPosY(GetCursorPosY() - ScaleX(12));
         TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam Homebrew & Millennium are not affiliated with");
 
-        SetCursorPos(ImVec2(cursorPosSave, GetCursorPosY() - ScaleY(20)));
+        SetCursorPos({ cursorPosSave, GetCursorPosY() - ScaleY(20) });
         TextColored(ImVec4(0.322f, 0.325f, 0.341f, 1.0f), "Steam®, Valve, or any of their partners.");
         
         SameLine(0);
