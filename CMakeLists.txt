@@ -131,6 +131,7 @@ elseif(WIN32)
         CURL::libcurl
         dwmapi
         unofficial::minizip::minizip
+        winmm
     )
 endif()
 

@@ -65,6 +65,9 @@ using namespace ImGui;
 int WINDOW_WIDTH  = 663;
 int WINDOW_HEIGHT = 434;
 
+const float TARGET_FPS = 240.0f;
+const float TARGET_FRAME_TIME = 1.0f / TARGET_FPS;
+
 static void GLFWErrorCallback(int error, const char* description)
 {
     MessageBoxA(NULL, fmt::format("An error occurred.\n\nGLFW Error {}: {}", error, description).c_str(), "Whoops!", MB_ICONERROR);
@@ -152,6 +155,8 @@ void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shar
 
     while (!glfwWindowShouldClose(window)) 
     {
+        double frameStartTime = glfwGetTime();
+
         if (shouldSetupScaling.load(std::memory_order_relaxed)) 
         {
             SetupImGuiScaling(window);
@@ -168,7 +173,13 @@ void SpawnRendererThread(GLFWwindow* window, const char* glsl_version, std::shar
             hasShown = true;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        double elapsedTime   = glfwGetTime() - frameStartTime;
+        double remainingTime = TARGET_FRAME_TIME - elapsedTime;
+
+        if (remainingTime > 0) 
+        {
+            Sleep((DWORD)(remainingTime * 1000));  
+        }
     }
 }
 
@@ -224,6 +235,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // freopen_s(&file, "CONOUT$", "w", stdout);
     // freopen_s(&file, "CONOUT$", "w", stderr);
     // std::cout << "Console allocated." << std::endl;
+
+    MMRESULT result = timeBeginPeriod(1);
+
+    if (result != TIMERR_NOERROR) {
+        std::cerr << "Failed to set timer resolution to 1 ms" << std::endl;
+        return 1;
+    }
  
     glfwSetErrorCallback(GLFWErrorCallback);
     if (!glfwInit())

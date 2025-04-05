@@ -79,6 +79,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             return true;
         }
+        case WM_DESTROY:
+        {
+            timeEndPeriod(1);
+        }
     }
     
     return CallWindowProc(g_OriginalWindProcCallback, hWnd, uMsg, wParam, lParam);

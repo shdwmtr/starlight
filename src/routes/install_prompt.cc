@@ -77,7 +77,7 @@ const bool FetchVersionInfo()
         // Find the latest non-prerelease version
         for (const auto& release : releaseInfo)
         {
-            if (release.contains("prerelease") && release["prerelease"].is_boolean() && release["prerelease"].get<bool>())
+            if (release.contains("prerelease") && release["prerelease"].is_boolean() && release["prerelease"].get<bool>() == false)
             {
                 releaseInfo = release;
                 for (const auto& asset : releaseInfo["assets"])

@@ -35,6 +35,7 @@
 #include <animate.h>
 #include <iostream>
 #include <math.h>
+#include <fmt/format.h>
 
 using namespace ImGui;
 
@@ -44,7 +45,8 @@ using namespace ImGui;
  */
 bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
 {
-    static const char* strTitleText = "Steam Homebrew";
+    ImGuiIO& io = GetIO();
+    const std::string strTitleText = fmt::format("Steam Homebrew", io.Framerate);
 
     ImGuiViewport* viewport = GetMainViewport();
     PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(ScaleX(15), ScaleY(15)));
@@ -86,7 +88,7 @@ bool RenderTitleBarComponent(std::shared_ptr<RouterNav> router)
 
         SameLine(0, titlePadding);
         SetCursorPosY(GetCursorPosY() + ScaleY(10));
-        Text(strTitleText);
+        Text(strTitleText.c_str());
         SameLine();
 
         static bool isCloseButtonHovered = false;
