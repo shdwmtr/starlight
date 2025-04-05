@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/shdwmtr/starlight/compare/v1.0.4...v1.0.5) (2025-04-05)
+
+
+### Bug Fixes
+
+* Fix timer resolution for higher refresh rate monitors ([ac4baaa](https://github.com/shdwmtr/starlight/commit/ac4baaa0f3e9c0936313eff11d31ccb5e040f17d))
+
 ## [1.0.4](https://github.com/shdwmtr/starlight/compare/v1.0.3...v1.0.4) (2025-04-03)
 
 
